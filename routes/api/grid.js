@@ -26,6 +26,8 @@ async function addStatus(grids) {
     status: { $ne: "invalid" },
     gridId: { $in: ids },
   });
+  let repeatedIds = [],
+    processingIds = [];
   //只要查询不报错，不用管length
   if (existGrids) {
     for (let j = 0; j < grids.length; j++) {
@@ -54,6 +56,7 @@ async function addStatus(grids) {
           checkTimeGap(init.imageTime, newGrid.imageTime)
         ) {
           newGrid.status = "processing";
+          processingIds.push(j);
           break;
         }
       }
@@ -65,6 +68,8 @@ async function addStatus(grids) {
           grid.imageFilename === newGrid.imageFilename &&
           grid.gridId === newGrid.gridId
         ) {
+          console.log("重复提交");
+          repeatedIds.push(j);
           ////重复提交记录，需要标记，循环结束后删除
         }
 
@@ -75,6 +80,7 @@ async function addStatus(grids) {
           checkTimeGap(grid.imageTime, newGrid.imageTime)
         ) {
           newGrid.status = "processing";
+          processingIds.push(j);
           break;
         }
       }
@@ -87,20 +93,57 @@ async function addStatus(grids) {
     }
   } else {
   }
+
+  //去掉重复提交任务
+  if (repeatedIds.length) {
+    for (let i = repeatedIds.length - 1; i >= 0; i--) {
+      let j = repeatedIds[i];
+      grids.splice(j, 1);
+    }
+  }
+
+  //提交处理队列
+  if (processingIds.length) {
+    for (let i = 0; i < processingIds.length; i--) {
+      let grid = grids[processingIds[i]];
+      console.log(grid);
+    }
+  }
+
   return grids;
 }
 function checkTimeGap(beforeTime, afterTime) {
   return afterTime - beforeTime > 7 * 24 * 3600 * 1000;
+  // return true;
+}
+
+async function changeStatus() {
+  let gridId = ctx.request.body.gridID;
+  let imageFilename = ctx.request.body.imageFilename;
+  let status = ctx.request.body.status; //processed,invalid
+  let grids = await Grid.updateOne(
+    {
+      gridId,
+      imageFilename,
+    },
+    {
+      status,
+    }
+  );
+  if (grids) {
+    ctx.body = {
+      msg: "设置状态成功",
+    };
+  }
 }
 
 var total = async function (ctx, next) {
   // let id = ctx.params.id;
-  //   let id = ctx.state.user.userid;
   let grids = await Grid.find({});
   if (grids) {
     ctx.body = {
       status: 1,
-      msg: "总数",
+      msg: "全部数据",
       data: grids,
     };
   }
@@ -108,4 +151,5 @@ var total = async function (ctx, next) {
 
 router.get("/grids", total);
 router.post("/grids", add);
+router.put("/grids", changeStatus);
 module.exports = router;

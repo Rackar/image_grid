@@ -1,5 +1,5 @@
 {
-  "name": "gdal_grid",
+  "name": "image_grid",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
