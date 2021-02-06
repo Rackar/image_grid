@@ -1,7 +1,7 @@
 var turf = require("@turf/turf");
 
-let latSecs = 20,
-  longSecs = 20;
+let latSecs = 10,
+  longSecs = 10;
 let polygon1 = turf.polygon(
   [
     [
@@ -110,7 +110,7 @@ function calcGrids(imagePolygon, longSection, latSection) {
         containStatus,
         imageTime: imagePolygon.properties.imageTime,
         imageFilename: imagePolygon.properties.imageFilename,
-        id: calcGridId(long, lat, longSection, latSection),
+        gridId: calcGridId(long, lat, longSection, latSection),
       };
       grids.push(grid);
     }
@@ -151,3 +151,5 @@ function prefixNumLength(num, length) {
   }
   return prefixNumLength("0" + num, length);
 }
+
+exports.updateGrids = updateGrids;
