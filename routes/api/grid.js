@@ -4,8 +4,8 @@ let lap = require("../../lap");
 
 var add = async function (ctx, next) {
   // let grids = ctx.request.body.grids;
-  let grids = lap.updateGrids.map((grid) => grid.properties.detail); //本地测试赋值
-  grids = addStatus(grids);
+  let grids = lap.updateGrids().map((grid) => grid.properties.detail); //本地测试赋值
+  grids = await addStatus(grids);
   var arr = grids.map((grid) => new Grid(grid));
   let result = await Grid.insertMany(arr);
 
@@ -26,6 +26,7 @@ async function addStatus(grids) {
     status: { $ne: "invalid" },
     gridId: { $in: ids },
   });
+  //只要查询不报错，不用管length
   if (existGrids) {
     for (let j = 0; j < grids.length; j++) {
       let newGrid = grids[j];
@@ -33,25 +34,40 @@ async function addStatus(grids) {
       let sortedGrids = existGrids
         .filter((grid) => grid.gridId === newGrid.gridId)
         .sort((a, b) => b.imageTime - a.imageTime);
-      if ((sortedGrids.length = 0)) {
+
+      //本格网数据为0
+      if (sortedGrids.length === 0) {
         newGrid.status = "init";
         break;
       }
+
+      //本格网仅初始化过，尚未比对
       if (
         sortedGrids.filter(
           (grid) => grid.status === "processing" || grid.status === "processed"
-        ).length === 0 &&
-        checkTimeGap(
-          sortedGrids.find((grid) => grid.status === "init").imageTime,
-          newGrid.imageTime
-        )
+        ).length === 0
       ) {
-        newGrid.status = "processing";
+        let init = sortedGrids.find((grid) => grid.status === "init");
+        if (
+          init &&
+          init.imageTime &&
+          checkTimeGap(init.imageTime, newGrid.imageTime)
+        ) {
+          newGrid.status = "processing";
+          break;
+        }
       }
-      if (sortedGrids.every((grid) => grid.status === "init")) {
-      }
+
+      //正常的
       for (let k = 0; k < sortedGrids.length; k++) {
         const grid = sortedGrids[k];
+        if (
+          grid.imageFilename === newGrid.imageFilename &&
+          grid.gridId === newGrid.gridId
+        ) {
+          ////重复提交记录，需要标记，循环结束后删除
+        }
+
         if (grid.status === "processing") {
           break;
         } else if (
@@ -62,12 +78,14 @@ async function addStatus(grids) {
           break;
         }
       }
-      if (newGrid.status !== "processing") {
-        newGrid.status = "init";
+
+      //漏网的
+      if (newGrid.status === "init" || newGrid.status === "processing") {
       } else {
-        //此处可以触发监测任务
+        newGrid.status = "skiped";
       }
     }
+  } else {
   }
   return grids;
 }
@@ -78,28 +96,16 @@ function checkTimeGap(beforeTime, afterTime) {
 var total = async function (ctx, next) {
   // let id = ctx.params.id;
   //   let id = ctx.state.user.userid;
-  //   let user = await User.findOne({ _id: id });
-  //   if (user) {
-  //     let arr = user.starsLogs;
-  //     var sum = arr.length
-  //       ? arr.reduce((prev, next, index, array) => {
-  //           // console.log(prev);
-  //           return { stars: prev.stars + next.stars };
-  //         })
-  //       : 0;
-  //     let data = {
-  //       stars: sum,
-  //       real_name: user.username,
-  //       history: arr,
-  //     };
-  //     ctx.body = {
-  //       status: 1,
-  //       msg: "星星总数",
-  //       data: data,
-  //     };
-  //   }
+  let grids = await Grid.find({});
+  if (grids) {
+    ctx.body = {
+      status: 1,
+      msg: "总数",
+      data: grids,
+    };
+  }
 };
 
-router.post("/total", total);
+router.get("/grids", total);
 router.post("/grids", add);
 module.exports = router;

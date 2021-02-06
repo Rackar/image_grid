@@ -1,21 +1,24 @@
 var turf = require("@turf/turf");
 
-let latSecs = 10,
-  longSecs = 10;
+let latSecs = 5,
+  longSecs = 5;
 let polygon1 = turf.polygon(
   [
     [
-      [111.4, 40.3],
-      [111.4, 40.999],
-      [111.9, 40.999],
-      [111.9, 40.4],
-      [111.4, 40.3],
+      [111.1, 40.1],
+      [111.4, 40.1],
+      [111.4, 40.5],
+      [111.1, 40.5],
+      [111.1, 40.1],
     ],
   ],
   { name: "poly1", imageTime: Date.now(), imageFilename: "filename" }
 );
 
-let updateGrids = filterGrids(calcGrids(polygon1, longSecs, latSecs));
+// let updateGrids = filterGrids(calcGrids(polygon1, longSecs, latSecs));
+function updateGrids() {
+  return filterGrids(calcGrids(polygon1, longSecs, latSecs));
+}
 // console.log();
 
 //根据格网大小，将外包矩形扩大对齐到网格
@@ -36,6 +39,7 @@ function calcExtendBoundingBoxWithTurf(imagePolygon, longSection, latSection) {
   let maxLat =
     Math.ceil((MaxY - Math.floor(MaxY)) * latSection) / latSection +
     Math.floor(MaxY);
+  console.log(minLong, minLat, maxLong, maxLat);
   return [minLong, minLat, maxLong, maxLat];
 }
 
