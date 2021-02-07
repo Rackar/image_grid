@@ -17,12 +17,12 @@ async function addStatus(grids) {
       //按照时间倒排
       let sortedGrids = existGrids
         .filter((grid) => grid.gridId === newGrid.gridId)
-        .sort((a, b) => b.imageTime - a.imageTime);
+        .sort((a, b) => b.acquisitio - a.acquisitio);
 
       //本格网数据为0
       if (sortedGrids.length === 0) {
         newGrid.status = "init";
-        break;
+        continue;
       }
 
       //本格网仅初始化过，尚未比对
@@ -34,12 +34,12 @@ async function addStatus(grids) {
         let init = sortedGrids.find((grid) => grid.status === "init");
         if (
           init &&
-          init.imageTime &&
-          checkTimeGap(init.imageTime, newGrid.imageTime)
+          init.acquisitio &&
+          checkTimeGap(init.acquisitio, newGrid.acquisitio)
         ) {
           newGrid.status = "processing";
           processingIds.push(j);
-          break;
+          continue;
         }
       }
 
@@ -47,7 +47,7 @@ async function addStatus(grids) {
       for (let k = 0; k < sortedGrids.length; k++) {
         const grid = sortedGrids[k];
         if (
-          grid.imageFilename === newGrid.imageFilename &&
+          grid.filename === newGrid.filename &&
           grid.gridId === newGrid.gridId
         ) {
           console.log("重复提交");
@@ -59,7 +59,7 @@ async function addStatus(grids) {
           break;
         } else if (
           grid.status === "processed" &&
-          checkTimeGap(grid.imageTime, newGrid.imageTime)
+          checkTimeGap(grid.acquisitio, newGrid.acquisitio)
         ) {
           newGrid.status = "processing";
           processingIds.push(j);

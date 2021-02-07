@@ -12,7 +12,7 @@ let polygon1 = turf.polygon(
       [111.1, 40.1],
     ],
   ],
-  { name: "poly1", imageTime: Date.now(), imageFilename: "filename" }
+  { name: "poly1", acquisitio: Date.now(), filename: "filename" }
 );
 
 // let updateGrids = filterGrids(calcGrids(polygon1, longSecs, latSecs));
@@ -112,8 +112,8 @@ function calcGrids(imagePolygon, longSection, latSection) {
       //   }
       grid.properties.detail = {
         containStatus,
-        imageTime: imagePolygon.properties.imageTime,
-        imageFilename: imagePolygon.properties.imageFilename,
+        acquisitio: imagePolygon.properties.acquisitio,
+        filename: imagePolygon.properties.filename,
         gridId: calcGridId(long, lat, longSection, latSection),
       };
       grids.push(grid);

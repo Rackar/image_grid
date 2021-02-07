@@ -20,12 +20,12 @@ var add = async function (ctx, next) {
 
 async function changeStatus() {
   let gridId = ctx.request.body.gridID;
-  let imageFilename = ctx.request.body.imageFilename;
+  let filename = ctx.request.body.filename;
   let status = ctx.request.body.status; //processed,invalid
   let grids = await Grid.updateOne(
     {
       gridId,
-      imageFilename,
+      filename,
     },
     {
       status,
