@@ -130,15 +130,6 @@ function filterGrids(grids) {
   return filtered;
 }
 
-function updateToDatabase(grids) {
-  //更新grids到数据库
-  let object = {
-    imageTime: "",
-    imageFilename: "",
-    id: "gridid",
-  };
-}
-
 function contain(imagePoly, gridPoly) {
   return turf.booleanContains(imagePoly, gridPoly);
 }
@@ -157,3 +148,5 @@ function prefixNumLength(num, length) {
 }
 
 exports.updateGrids = updateGrids;
+exports.filterGrids = filterGrids;
+exports.calcGrids = calcGrids;

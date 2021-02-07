@@ -16,6 +16,8 @@
     "koa-json": "^2.0.2",
     "koa-logger": "^3.2.1",
     "koa-router": "^10.0.0",
-    "mongoose": "^5.11.15"
+    "mongoose": "^5.11.15",
+    "shp-write": "^0.3.2",
+    "shpjs": "^3.6.3"
   }
 }
