@@ -3,7 +3,7 @@ const fs = require("fs");
 const lap = require("./lap");
 const gridCtrl = require("./controler/grid");
 var Grid = require("./models/grid");
-// var shpwrite = require("shp-write");
+var shpwrite = require("./libs/shp-write");
 
 readShapeFile();
 function readShapeFile() {
@@ -32,9 +32,9 @@ function readShapeFile() {
           processingIds.length <= grids.length
         ) {
           let processingFeatures = getProcessingGrids(grids, processingIds);
-          console.log(JSON.stringify(processingFeatures));
-          processingFeatures = test(processingFeatures);
-          generateShp(processingFeatures, imageShp.properties.filename);
+          // console.log(JSON.stringify(processingFeatures));
+          let mutilRings = polygonsToMutilRings(processingFeatures);
+          generateShp(mutilRings, imageShp.properties.filename);
         }
       }
     },
@@ -44,28 +44,19 @@ function readShapeFile() {
   );
 }
 
-function test(processingFeatures) {
-  let arr = processingFeatures.map((feature) => [
-    feature.geometry.coordinates[0],
-  ]);
-  let features = arr.map((coord) => {
-    return {
+function polygonsToMutilRings(processingFeatures) {
+  let arr = processingFeatures.map(
+    (feature) => feature.geometry.coordinates[0]
+  );
+  let features = [
+    {
       type: "Feature",
       geometry: {
         type: "Polygon",
-        coordinates: [coord],
+        coordinates: arr,
       },
-    };
-  });
-  // let features = [
-  //   {
-  //     type: "Feature",
-  //     geometry: {
-  //       type: "Polygon",
-  //       coordinates: arr,
-  //     },
-  //   },
-  // ];
+    },
+  ];
   return features;
 }
 
@@ -102,20 +93,15 @@ function generateShp(features, filename) {
       line: "mylines",
     },
   };
-  let obj = {
-    type: "FeatureCollection",
-    features,
-  };
-  console.log(obj.toString());
+
   // a GeoJSON bridge for features
-  let arr;
-  // arr = shpwrite.zip(
-  //   {
-  //     type: "FeatureCollection",
-  //     features,
-  //   },
-  //   options
-  // );
+  let arr = shpwrite.zip(
+    {
+      type: "FeatureCollection",
+      features,
+    },
+    options
+  );
   // console.log(arr);
   //3. fs.writeFile  写入文件（会覆盖之前的内容）（文件不存在就创建）  utf8参数可以省略
   fs.writeFile("./shp/" + filename + ".zip", arr, "", function (error) {
