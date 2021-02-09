@@ -38,6 +38,7 @@ async function addStatus(grids) {
           checkTimeGap(init.acquisitio, newGrid.acquisitio)
         ) {
           newGrid.status = "processing";
+          newGrid.previousFilename = grid.filename;
           processingIds.push(j);
           continue;
         }
@@ -50,7 +51,6 @@ async function addStatus(grids) {
           grid.filename === newGrid.filename &&
           grid.gridId === newGrid.gridId
         ) {
-          console.log("重复提交");
           repeatedIds.push(j);
           ////重复提交记录，需要标记，循环结束后删除
         }
@@ -62,6 +62,7 @@ async function addStatus(grids) {
           checkTimeGap(grid.acquisitio, newGrid.acquisitio)
         ) {
           newGrid.status = "processing";
+          newGrid.previousFilename = grid.filename;
           processingIds.push(j);
           break;
         }
@@ -78,6 +79,7 @@ async function addStatus(grids) {
 
   //去掉重复提交任务
   if (repeatedIds.length) {
+    console.log("重复提交数为", repeatedIds.length);
     for (let i = repeatedIds.length - 1; i >= 0; i--) {
       let j = repeatedIds[i];
       grids.splice(j, 1);
@@ -86,13 +88,14 @@ async function addStatus(grids) {
 
   //提交处理队列
   if (processingIds.length) {
-    for (let i = 0; i < processingIds.length; i--) {
-      let grid = grids[processingIds[i]];
-      console.log(grid);
-    }
+    console.log("需处理数量为", processingIds.length);
+    // for (let i = 0; i < processingIds.length; i++) {
+    //   let grid = grids[processingIds[i]];
+    //   console.log(grid);
+    // }
   }
 
-  return grids;
+  return { grids, processingIds };
 }
 function checkTimeGap(beforeTime, afterTime) {
   return afterTime - beforeTime > 7 * 24 * 3600 * 1000;

@@ -26,7 +26,7 @@ function calcExtendBoundingBoxWithTurf(imagePolygon, longSection, latSection) {
   let bbox = turf.bbox(imagePolygon);
   if (!bbox || bbox.length != 4) return new Error("外包矩形计算出错");
   let [MinX, MinY, MaxX, MaxY] = [...bbox];
-  console.log(MinX, MinY, MaxX, MaxY);
+  console.log("影像外包矩形：", MinX, MinY, MaxX, MaxY);
   let minLong =
     Math.floor((MinX - Math.floor(MinX)) * longSection) / longSection +
     Math.floor(MinX);
@@ -39,7 +39,7 @@ function calcExtendBoundingBoxWithTurf(imagePolygon, longSection, latSection) {
   let maxLat =
     Math.ceil((MaxY - Math.floor(MaxY)) * latSection) / latSection +
     Math.floor(MaxY);
-  console.log(minLong, minLat, maxLong, maxLat);
+  // console.log(minLong, minLat, maxLong, maxLat);
   return [minLong, minLat, maxLong, maxLat];
 }
 
@@ -126,7 +126,7 @@ function filterGrids(grids) {
   let filtered = grids.filter(
     (grid) => grid.properties.detail.containStatus === true
   );
-  console.log(filtered.length);
+  console.log("涉及格网的数量", filtered.length);
   return filtered;
 }
 
@@ -150,3 +150,4 @@ function prefixNumLength(num, length) {
 exports.updateGrids = updateGrids;
 exports.filterGrids = filterGrids;
 exports.calcGrids = calcGrids;
+exports.calcPolygonFromGridId = calcPolygonFromGridId;

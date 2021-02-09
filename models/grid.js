@@ -6,6 +6,7 @@ var GridSchema = new Schema(
     gridId: String,
     // imageId: String,
     filename: String,
+    previousFilename: String,
     acquisitio: Date,
     satellite: String,
     cloudperce: String,
