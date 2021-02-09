@@ -35,10 +35,11 @@ async function addStatus(grids) {
         if (
           init &&
           init.acquisitio &&
+          newGrid.filename !== init.filename &&
           checkTimeGap(init.acquisitio, newGrid.acquisitio)
         ) {
           newGrid.status = "processing";
-          newGrid.previousFilename = grid.filename;
+          newGrid.previousFilename = init.filename;
           processingIds.push(j);
           continue;
         }
