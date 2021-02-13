@@ -38,7 +38,7 @@ async function addStatus(grids) {
           newGrid.filename !== init.filename &&
           checkTimeGap(init.acquisitio, newGrid.acquisitio)
         ) {
-          newGrid.status = "processing";
+          newGrid.status = "backup";
           newGrid.previousFilename = init.filename;
           processingIds.push(j);
           continue;
@@ -62,7 +62,7 @@ async function addStatus(grids) {
           grid.status === "processed" &&
           checkTimeGap(grid.acquisitio, newGrid.acquisitio)
         ) {
-          newGrid.status = "processing";
+          newGrid.status = "backup";
           newGrid.previousFilename = grid.filename;
           processingIds.push(j);
           break;

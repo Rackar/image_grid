@@ -14,7 +14,7 @@ var GridSchema = new Schema(
     tarsize: String,
     status: {
       type: String,
-      enum: ["init", "skiped", "processing", "processed", "invalid"],
+      enum: ["init", "skiped", "backup", "processing", "processed", "invalid"],
     },
   }
   // ,

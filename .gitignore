@@ -4,3 +4,7 @@ node_modules
 *.prj
 *.shp
 *.shx
+*.sbn
+*.sbx
+*.shp.xml
+*.lock
