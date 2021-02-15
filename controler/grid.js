@@ -10,7 +10,7 @@ async function addStatus(grids) {
   });
   let repeatedIds = [],
     processingIds = [];
-  //只要查询不报错，不用管length
+  //只要查询不报错，existGrids即为数组，不用管length
   if (existGrids) {
     for (let j = 0; j < grids.length; j++) {
       let newGrid = grids[j];
@@ -96,7 +96,7 @@ async function addStatus(grids) {
     // }
   }
 
-  return { grids, processingIds };
+  return grids;
 }
 function checkTimeGap(beforeTime, afterTime) {
   return afterTime - beforeTime > 7 * 24 * 3600 * 1000;

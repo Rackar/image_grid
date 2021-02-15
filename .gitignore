@@ -8,3 +8,4 @@ node_modules
 *.sbx
 *.shp.xml
 *.lock
+*.xml
