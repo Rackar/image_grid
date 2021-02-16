@@ -15,23 +15,27 @@ async function addStatus(grids) {
     for (let j = 0; j < grids.length; j++) {
       let newGrid = grids[j];
       //按照时间倒排
-      let sortedGrids = existGrids
+      let existGridRecords = existGrids
         .filter((grid) => grid.gridId === newGrid.gridId)
         .sort((a, b) => b.acquisitio - a.acquisitio);
 
       //本格网数据为0
-      if (sortedGrids.length === 0) {
+      if (existGridRecords.length === 0) {
         newGrid.status = "init";
         continue;
       }
 
       //本格网仅初始化过，尚未比对
       if (
-        sortedGrids.filter(
+        existGridRecords.filter(
           (grid) => grid.status === "processing" || grid.status === "processed"
         ).length === 0
       ) {
-        let init = sortedGrids.find((grid) => grid.status === "init");
+        let init = existGridRecords.find((grid) => grid.status === "init");
+        if (init && newGrid.filename === init.filename) {
+          repeatedIds.push(j);
+          continue;
+        }
         if (
           init &&
           init.acquisitio &&
@@ -46,8 +50,8 @@ async function addStatus(grids) {
       }
 
       //正常的
-      for (let k = 0; k < sortedGrids.length; k++) {
-        const grid = sortedGrids[k];
+      for (let k = 0; k < existGridRecords.length; k++) {
+        const grid = existGridRecords[k];
         if (
           grid.filename === newGrid.filename &&
           grid.gridId === newGrid.gridId
@@ -76,6 +80,7 @@ async function addStatus(grids) {
       }
     }
   } else {
+    console.log("连接数据库失败");
   }
 
   //去掉重复提交任务

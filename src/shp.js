@@ -1,14 +1,17 @@
-const shp = require("./libs/shp-read");
+const shp = require("../libs/shp-read");
 const fs = require("fs");
 const lap = require("./lap");
-const gridCtrl = require("./controler/grid");
-const Grid = require("./models/grid");
-var shpwrite = require("./libs/shp-write");
+const gridCtrl = require("../controler/grid");
+const Grid = require("../models/grid");
+var shpwrite = require("../libs/shp-write");
 
-readShapeFile();
+const ALI_API = require("./ali_api");
+
+ALI_API.upload_task("aaa");
+// readShapeFile();
 function readShapeFile() {
-  // http服务器下的test.shp
-  shp("./myshapes/test_end").then(
+  // http服务器下的test.shp或者程序根目录下的相对路径
+  shp("./myshapes/test").then(
     async function (geojson) {
       console.log("影像数量为：", geojson.features.length);
       let allBackupGrids = [];
@@ -18,28 +21,6 @@ function readShapeFile() {
         let gridsFeature = shps.map((grid) => grid.properties.detail);
         let grids = await gridCtrl.addStatus(gridsFeature);
         if (grids && grids.length) allBackupGrids.push(...grids);
-
-        // processingIds = [0, 1, 2]; //test
-        // if (
-        //   grids &&
-        //   grids.length &&
-        //   processingIds &&
-        //   processingIds.length &&
-        //   processingIds.length <= grids.length
-        // ) {
-        //   for (let i = 0; i < grids.length; i++) {
-        //     // const index = processingIds[i];
-        //     // let grid = grids[index];
-        //     allBackupGrids.push(grids[i]);
-        //     // let feature = lap.calcPolygonFromGridId(grid.gridId);
-        //     // feature.properties.gridId = grid.gridId;
-        //     // features.push(feature);
-        //   }
-        //   // let processingFeatures = getProcessingGrids(grids, processingIds);
-        //   // // console.log(JSON.stringify(processingFeatures));
-        //   // let mutilRings = polygonsToMutilRings(processingFeatures);
-        //   // generateShp(mutilRings, imageShp.properties.filename);
-        // }
       }
       let uniqueArray = optimizeImages(allBackupGrids);
       let gourp = gridsToGroupImage(uniqueArray);
@@ -47,11 +28,32 @@ function readShapeFile() {
 
       //更新数据库 滞后
       await insertToDatabase(allBackupGrids);
+      //进行处理发送命令
+      await beginProcessing(gourp);
+      //修改数据库状态
+      changeProcessed(group);
     },
     (e) => {
-      console.log(e);
+      console.log("shp读取出错，检查路径", e);
     }
   );
+}
+
+function changeProcessed(group) {}
+
+function beginProcessing(gourp) {
+  for (let i = 0; i < group.length; i++) {
+    const pair = group[i];
+    let newDomName = getStandardFilename(pair.filename);
+    let oldDomName = getStandardFilename(pair.previousFilename);
+    let shp = "";
+    ALI_API.upload_task(newDomName, oldDomName, shp, "");
+  }
+}
+
+function getStandardFilename(filename) {
+  let DOMfilename = filename;
+  return DOMfilename;
 }
 
 async function insertToDatabase(allBackupGrids) {
@@ -263,35 +265,8 @@ function generateShp(features, filename) {
     },
     options
   );
-  // console.log(arr);
   //3. fs.writeFile  写入文件（会覆盖之前的内容）（文件不存在就创建）  utf8参数可以省略
-  fs.writeFileSync("./shp/" + filename + ".zip", arr, "");
+  fs.writeFileSync("../shp/" + filename + ".zip", arr, "");
 
   console.log("保存shp压缩包成功");
-
-  //    function (error) {
-  //   if (error) {
-  //     console.log(error);
-  //     return false;
-  //   }
-
-  // }
 }
-
-// testSort([1, 3, 1, 2, 2, 3, 4, 5, 6, 1, 2, 23]);
-// function testSort(arr) {
-//   let sortedArr = [];
-//   for (let i = 0; i < arr.length; i++) {
-//     const element = arr[i];
-//     if (sortedArr.length === 0) sortedArr.push(element);
-//     let importIndex = 0;
-//     for (let i = 0; i < sortedArr.length; i++) {
-//       const el = sortedArr[i];
-//       if (element >= el) {
-//         importIndex = i + 1;
-//       }
-//     }
-//     sortedArr.splice(importIndex, 0, element);
-//   }
-//   console.log(sortedArr);
-// }

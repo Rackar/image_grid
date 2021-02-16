@@ -1,6 +1,6 @@
 const router = require("koa-router")();
 var Grid = require("../../models/grid");
-let lap = require("../../lap");
+let lap = require("../../src/lap");
 let gridCtrl = require("../../controler/grid");
 
 var add = async function (ctx, next) {

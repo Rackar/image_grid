@@ -11,18 +11,20 @@
   "dependencies": {
     "@turf/turf": "^6.3.0",
     "dbf": "^0.1.4",
-    "jszip": "2.5.0",
     "debug": "^4.3.1",
+    "jszip": "2.5.0",
     "koa": "^2.13.1",
     "koa-bodyparser": "^4.3.0",
     "koa-json": "^2.0.2",
     "koa-logger": "^3.2.1",
     "koa-router": "^10.0.0",
-    "mongoose": "^5.11.15",
     "lie": "^3.0.1",
     "lru-cache": "^2.7.0",
+    "mongoose": "^5.11.15",
     "parsedbf": "^1.1.0",
     "proj4": "^2.1.4",
-    "url": "^0.11.0"
+    "request": "^2.88.2",
+    "url": "^0.11.0",
+    "urlencode": "^1.1.0"
   }
 }
