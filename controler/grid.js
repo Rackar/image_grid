@@ -61,7 +61,7 @@ async function addStatus(grids) {
         }
 
         if (grid.status === "processing") {
-          break;
+          continue;
         } else if (
           grid.status === "processed" &&
           checkTimeGap(grid.acquisitio, newGrid.acquisitio)
@@ -69,7 +69,7 @@ async function addStatus(grids) {
           newGrid.status = "backup";
           newGrid.previousFilename = grid.filename;
           processingIds.push(j);
-          break;
+          continue;
         }
       }
 
@@ -105,8 +105,8 @@ async function addStatus(grids) {
 }
 function checkTimeGap(beforeTime, afterTime) {
   //检查时间是否符合要求，测试时屏蔽此代码
-  // return afterTime - beforeTime > 7 * 24 * 3600 * 1000;
-  return true;
+  return afterTime - beforeTime > 7 * 24 * 3600 * 1000;
+  // return true;
 }
 
 exports.addStatus = addStatus;

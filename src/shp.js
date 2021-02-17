@@ -3,14 +3,14 @@ const fs = require("fs");
 const lap = require("./lap");
 const gridCtrl = require("../controler/grid");
 const Grid = require("../models/grid");
-var shpwrite = require("../libs/shp-write");
+const shpwrite = require("../libs/shp-write");
 
 const ALI_API = require("./ali_api");
 
 readShapeFile();
 function readShapeFile() {
   // http服务器下的test.shp或者程序根目录下的相对路径
-  shp("./myshapes/test").then(
+  shp("./myshapes/test_end").then(
     async function (geojson) {
       console.log("影像数量为：", geojson.features.length);
       let allNewGrids = [];
@@ -45,8 +45,7 @@ function beginProcessing(group) {
     const pair = group[i];
     let newDomName = getStandardFilename(pair.filename);
     let oldDomName = getStandardFilename(pair.previousFilename);
-    let shp = "./shp/" + uuid + ".zip";
-    ALI_API.upload_task(newDomName, oldDomName, shp, pair.uuid);
+    ALI_API.upload_task(newDomName, oldDomName, pair.uuid, pair.uuid);
   }
 }
 
@@ -104,7 +103,9 @@ function optimizeImages(arr) {
         grid.info[0].status = "processing";
         return grid;
       });
-    let mustUseImage = sureImage.map((ele) => ele.info[0].filename);
+    let mustUseImage = [
+      ...new Set(sureImage.map((ele) => ele.info[0].filename)),
+    ];
     let otherImage = sortedArr.filter((grid) => grid.info.length !== 1);
     for (let i = otherImage.length - 1; i >= 0; i--) {
       let image = otherImage[i];
