@@ -7,29 +7,28 @@ var shpwrite = require("../libs/shp-write");
 
 const ALI_API = require("./ali_api");
 
-ALI_API.upload_task("aaa");
-// readShapeFile();
+readShapeFile();
 function readShapeFile() {
   // http服务器下的test.shp或者程序根目录下的相对路径
   shp("./myshapes/test").then(
     async function (geojson) {
       console.log("影像数量为：", geojson.features.length);
-      let allBackupGrids = [];
+      let allNewGrids = [];
       for (let i = 0; i < geojson.features.length; i++) {
         const imageShp = geojson.features[i];
         let shps = lap.filterGrids(lap.calcGrids(imageShp, 10, 10));
         let gridsFeature = shps.map((grid) => grid.properties.detail);
         let grids = await gridCtrl.addStatus(gridsFeature);
-        if (grids && grids.length) allBackupGrids.push(...grids);
+        if (grids && grids.length) allNewGrids.push(...grids);
       }
-      let uniqueArray = optimizeImages(allBackupGrids);
-      let gourp = gridsToGroupImage(uniqueArray);
-      groupImagesToShp(gourp);
+      let uniqueBackupArray = optimizeImages(allNewGrids);
+      let group = gridsToGroupImage(uniqueBackupArray);
+      groupImagesToShp(group);
 
       //更新数据库 滞后
-      await insertToDatabase(allBackupGrids);
+      await insertToDatabase(allNewGrids);
       //进行处理发送命令
-      await beginProcessing(gourp);
+      await beginProcessing(group);
       //修改数据库状态
       changeProcessed(group);
     },
@@ -41,13 +40,13 @@ function readShapeFile() {
 
 function changeProcessed(group) {}
 
-function beginProcessing(gourp) {
+function beginProcessing(group) {
   for (let i = 0; i < group.length; i++) {
     const pair = group[i];
     let newDomName = getStandardFilename(pair.filename);
     let oldDomName = getStandardFilename(pair.previousFilename);
-    let shp = "";
-    ALI_API.upload_task(newDomName, oldDomName, shp, "");
+    let shp = "./shp/" + uuid + ".zip";
+    ALI_API.upload_task(newDomName, oldDomName, shp, pair.uuid);
   }
 }
 
@@ -61,8 +60,9 @@ async function insertToDatabase(allBackupGrids) {
   let result = await Grid.insertMany(arr);
   if (result && result.length) {
     console.log("插入成功", result.length);
+  } else {
+    console.log("未插入数据库任何记录");
   }
-  console.log("成功");
 }
 
 function optimizeImages(arr) {
@@ -135,12 +135,14 @@ function optimizeImages(arr) {
     //   };
     // });
     // console.log(resArr);
-    let backupToSkiped = backupArrs
-      .filter((grid) => grid.status === "backup")
-      .map((grid) => {
+    let backupToSkiped = backupArrs.filter((grid) => grid.status === "backup");
+    if (backupToSkiped && backupToSkiped.length) {
+      backupToSkiped.map((grid) => {
         grid.status = "skiped";
-        return gird;
+        return grid;
       });
+    }
+
     let resArr = backupArrs.filter((grid) => grid.status === "processing");
     return resArr;
     ///todo 进一步优化逻辑
@@ -167,7 +169,7 @@ function optimizeImages(arr) {
 
 function gridsToGroupImage(resArr) {
   //按照所涉及影像文件分组
-  let newArr = resArr.reduce((pre, cur) => {
+  let group = resArr.reduce((pre, cur) => {
     let existIndex = pre.findIndex(
       (value) =>
         value.filename === cur.filename &&
@@ -183,13 +185,14 @@ function gridsToGroupImage(resArr) {
       pre.push({
         filename: cur.filename,
         previousFilename: cur.previousFilename,
+        uuid: ALI_API.guid(),
         info: [{ gridId: cur.gridId, status: cur.status }],
       });
       return pre;
     }
   }, []);
-  console.log(newArr);
-  return newArr;
+  console.log(group);
+  return group;
 }
 
 function groupImagesToShp(arr) {
@@ -203,7 +206,7 @@ function groupImagesToShp(arr) {
       features.push(feature);
     }
     let mutilRings = polygonsToMutilRings(features);
-    generateShp(mutilRings, image.filename);
+    generateShp(mutilRings, image.uuid);
   }
 }
 
@@ -266,7 +269,7 @@ function generateShp(features, filename) {
     options
   );
   //3. fs.writeFile  写入文件（会覆盖之前的内容）（文件不存在就创建）  utf8参数可以省略
-  fs.writeFileSync("../shp/" + filename + ".zip", arr, "");
+  fs.writeFileSync("./shp/" + filename + ".zip", arr, "");
 
   console.log("保存shp压缩包成功");
 }

@@ -83,7 +83,7 @@ async function addStatus(grids) {
     console.log("连接数据库失败");
   }
 
-  //去掉重复提交任务
+  //去掉重复提交任务，测试时屏蔽此代码
   if (repeatedIds.length) {
     console.log("重复提交数为", repeatedIds.length);
     for (let i = repeatedIds.length - 1; i >= 0; i--) {
@@ -104,8 +104,9 @@ async function addStatus(grids) {
   return grids;
 }
 function checkTimeGap(beforeTime, afterTime) {
-  return afterTime - beforeTime > 7 * 24 * 3600 * 1000;
-  // return true;
+  //检查时间是否符合要求，测试时屏蔽此代码
+  // return afterTime - beforeTime > 7 * 24 * 3600 * 1000;
+  return true;
 }
 
 exports.addStatus = addStatus;
