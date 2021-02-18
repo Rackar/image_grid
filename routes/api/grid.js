@@ -61,6 +61,24 @@ async function changeStatus() {
   }
 }
 
+async function processComplete(ctx, next) {
+  let uuid = ctx.request.body.uuid;
+  // let status = ctx.request.body.status; //processed,invalid
+  let grids = await Grid.updateMany(
+    {
+      uuid,
+      status: "processing",
+    },
+    {
+      status: "processed",
+    }
+  );
+  if (grids) {
+    ctx.body = {
+      msg: "设置状态成功",
+    };
+  }
+}
 var total = async function (ctx, next) {
   // let id = ctx.params.id;
   let grids = await Grid.find({});
@@ -76,5 +94,6 @@ var total = async function (ctx, next) {
 router.get("/grids", total);
 router.post("/grids", add);
 router.put("/grids", changeStatus);
-router.post("/shape", shpAdd);
+router.post("/shape", shpAdd); //传入url，为shp文件的路径，开始添加影像
+router.put("/shape", processComplete); //传入uuid，将本批次的status由processing改为processed
 module.exports = router;
