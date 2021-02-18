@@ -16,7 +16,7 @@ let polygon1 = turf.polygon(
 );
 
 // let updateGrids = filterGrids(calcGrids(polygon1, longSecs, latSecs));
-function updateGrids() {
+function testUpdateGrids() {
   return filterGrids(calcGrids(polygon1, longSecs, latSecs));
 }
 // console.log();
@@ -147,7 +147,7 @@ function prefixNumLength(num, length) {
   return prefixNumLength("0" + num, length);
 }
 
-exports.updateGrids = updateGrids;
+exports.testUpdateGrids = testUpdateGrids;
 exports.filterGrids = filterGrids;
 exports.calcGrids = calcGrids;
 exports.calcPolygonFromGridId = calcPolygonFromGridId;

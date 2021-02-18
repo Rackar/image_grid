@@ -7,12 +7,14 @@ const shpwrite = require("../libs/shp-write");
 
 const ALI_API = require("./ali_api");
 
-readShapeFile();
-function readShapeFile() {
-  // http服务器下的test.shp或者程序根目录下的相对路径
-  shp("./myshapes/test_end").then(
+// readShapeFile();
+async function readShapeFile(url = "./myshapes/test_end") {
+  let msg = "";
+  // http服务器下的test.shp或者程序根目录下的相对路径或绝对路径
+  await shp(url).then(
     async function (geojson) {
       console.log("影像数量为：", geojson.features.length);
+      msg += "影像数量为" + geojson.features.length;
       let allNewGrids = [];
       for (let i = 0; i < geojson.features.length; i++) {
         const imageShp = geojson.features[i];
@@ -23,7 +25,9 @@ function readShapeFile() {
         let grids = await gridCtrl.addStatus(gridsFeature);
         if (grids && grids.length) allNewGrids.push(...grids);
       }
+      msg += "，涉及格网" + allNewGrids.length;
       let uniqueBackupArray = optimizeImages(allNewGrids);
+      msg += "，待更新格网" + uniqueBackupArray.length;
       let group = gridsToGroupImage(uniqueBackupArray);
       groupImagesToShp(group);
 
@@ -32,12 +36,15 @@ function readShapeFile() {
       //进行处理发送命令
       await beginProcessing(group);
       //修改数据库状态
-      changeProcessed(group);
+      await changeProcessed(group);
+      msg += `，任务数量为${group.length}，数据库更新条数为${allNewGrids.length}`;
     },
     (e) => {
       console.log("shp读取出错，检查路径", e);
     }
   );
+  console.log(msg);
+  return msg;
 }
 
 function changeProcessed(group) {}
@@ -276,3 +283,5 @@ function generateShp(features, filename) {
 
   console.log("保存shp压缩包成功");
 }
+
+exports.readShapeFile = readShapeFile;
