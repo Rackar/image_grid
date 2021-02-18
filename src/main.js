@@ -1,7 +1,7 @@
 const shp = require("../libs/shp-read");
 const fs = require("fs");
-const lap = require("./lap");
-const gridCtrl = require("../controler/grid");
+const turf_geometry = require("./turf_geometry");
+const gridCtrl = require("./gridCtrl");
 const Grid = require("../models/grid");
 const shpwrite = require("../libs/shp-write");
 
@@ -16,7 +16,9 @@ function readShapeFile() {
       let allNewGrids = [];
       for (let i = 0; i < geojson.features.length; i++) {
         const imageShp = geojson.features[i];
-        let shps = lap.filterGrids(lap.calcGrids(imageShp, 10, 10));
+        let shps = turf_geometry.filterGrids(
+          turf_geometry.calcGrids(imageShp, 10, 10)
+        );
         let gridsFeature = shps.map((grid) => grid.properties.detail);
         let grids = await gridCtrl.addStatus(gridsFeature);
         if (grids && grids.length) allNewGrids.push(...grids);
@@ -202,7 +204,7 @@ function groupImagesToShp(arr) {
     let features = [];
     for (let j = 0; j < image.info.length; j++) {
       const grid = image.info[j];
-      let feature = lap.calcPolygonFromGridId(grid.gridId);
+      let feature = turf_geometry.calcPolygonFromGridId(grid.gridId);
       feature.properties.gridId = grid.gridId;
       features.push(feature);
     }
@@ -240,7 +242,7 @@ function getProcessingGrids(grids, processingIds) {
     for (let i = 0; i < processingIds.length; i++) {
       const index = processingIds[i];
       let grid = grids[index];
-      let feature = lap.calcPolygonFromGridId(grid.gridId);
+      let feature = turf_geometry.calcPolygonFromGridId(grid.gridId);
       feature.properties.gridId = grid.gridId;
       features.push(feature);
     }

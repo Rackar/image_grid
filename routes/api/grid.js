@@ -1,11 +1,11 @@
 const router = require("koa-router")();
 var Grid = require("../../models/grid");
-let lap = require("../../src/lap");
-let gridCtrl = require("../../controler/grid");
+let turf_geometry = require("../../src/turf_geometry");
+let gridCtrl = require("../../src/gridCtrl");
 
 var add = async function (ctx, next) {
   // let grids = ctx.request.body.grids;
-  let grids = lap.updateGrids().map((grid) => grid.properties.detail); //本地测试赋值
+  let grids = turf_geometry.updateGrids().map((grid) => grid.properties.detail); //本地测试赋值
   grids = await gridCtrl.addStatus(grids);
   var arr = grids.map((grid) => new Grid(grid));
   let result = await Grid.insertMany(arr);
