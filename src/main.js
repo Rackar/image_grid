@@ -11,30 +11,34 @@ const ALI_API = require("./ali_api");
 async function readShapeFile(url = "./myshapes/test_end") {
   let msg = "";
   // http服务器下的test.shp或者程序根目录下的相对路径或绝对路径
-  await shp(url).then(
-    async function (geojson) {
-      console.log("影像数量为：", geojson.features.length);
-      msg += "影像数量为" + geojson.features.length;
-      let allNewGrids = [];
-      allNewGrids = await featuresToGrids(geojson.features);
-      msg += "，涉及格网" + allNewGrids.length;
-      let uniqueBackupArray = optimizeImages(allNewGrids);
-      msg += "，待处理非重格网" + uniqueBackupArray.length;
-      let group = gridsToGroupImage(uniqueBackupArray);
-      groupImagesToShp(group);
-      addUuidToGrids(allNewGrids, group);
-      //更新数据库 滞后
-      await insertToDatabase(allNewGrids);
-      //进行处理发送命令
-      await beginProcessing(group);
-      //修改数据库状态
-      await changeProcessed(group);
-      msg += `，任务数量为${group.length}，数据库更新条数为${allNewGrids.length}`;
-    },
-    (e) => {
-      console.log("shp读取出错，检查路径", e);
-    }
-  );
+  await shp(url)
+    .then(
+      async function (geojson) {
+        console.log("影像数量为：", geojson.features.length);
+        msg += "影像数量为" + geojson.features.length;
+        let allNewGrids = [];
+        allNewGrids = await featuresToGrids(geojson.features);
+        msg += "，涉及格网" + allNewGrids.length;
+        let uniqueBackupArray = optimizeImages(allNewGrids);
+        msg += "，待处理非重格网" + uniqueBackupArray.length;
+        let group = gridsToGroupImage(uniqueBackupArray);
+        groupImagesToShp(group);
+        addUuidToGrids(allNewGrids, group);
+        //更新数据库 滞后
+        await insertToDatabase(allNewGrids);
+        //进行处理发送命令
+        await beginProcessing(group);
+        //修改数据库状态
+        await changeProcessed(group);
+        msg += `，任务数量为${group.length}，数据库更新条数为${allNewGrids.length}`;
+      },
+      (e) => {
+        console.log("shp读取出错，检查路径", e);
+      }
+    )
+    .catch((e) => {
+      msg = e;
+    });
   console.log(msg);
   return msg;
 }
@@ -52,6 +56,8 @@ function addUuidToGrids(gridsArr, groupArr) {
         grid.previousFilename &&
         group.filename &&
         group.previousFilename &&
+        grid.status &&
+        grid.status === "processing" &&
         grid.filename === group.filename &&
         grid.previousFilename === group.previousFilename
       ) {
