@@ -16,21 +16,13 @@ async function readShapeFile(url = "./myshapes/test_end") {
       console.log("影像数量为：", geojson.features.length);
       msg += "影像数量为" + geojson.features.length;
       let allNewGrids = [];
-      for (let i = 0; i < geojson.features.length; i++) {
-        const imageShp = geojson.features[i];
-        let shps = turf_geometry.filterGrids(
-          turf_geometry.calcGrids(imageShp, 10, 10)
-        );
-        let gridsFeature = shps.map((grid) => grid.properties.detail);
-        let grids = await gridCtrl.addStatus(gridsFeature);
-        if (grids && grids.length) allNewGrids.push(...grids);
-      }
+      allNewGrids = await featuresToGrids(geojson.features);
       msg += "，涉及格网" + allNewGrids.length;
       let uniqueBackupArray = optimizeImages(allNewGrids);
-      msg += "，待更新格网" + uniqueBackupArray.length;
+      msg += "，待处理非重格网" + uniqueBackupArray.length;
       let group = gridsToGroupImage(uniqueBackupArray);
       groupImagesToShp(group);
-
+      addUuidToGrids(allNewGrids, group);
       //更新数据库 滞后
       await insertToDatabase(allNewGrids);
       //进行处理发送命令
@@ -45,6 +37,41 @@ async function readShapeFile(url = "./myshapes/test_end") {
   );
   console.log(msg);
   return msg;
+}
+
+function addUuidToGrids(gridsArr, groupArr) {
+  for (let i = 0; i < groupArr.length; i++) {
+    const group = groupArr[i];
+    for (let j = 0; j < gridsArr.length; j++) {
+      let grid = gridsArr[j];
+      if (
+        grid &&
+        group &&
+        group.uuid &&
+        grid.filename &&
+        grid.previousFilename &&
+        group.filename &&
+        group.previousFilename &&
+        grid.filename === group.filename &&
+        grid.previousFilename === group.previousFilename
+      ) {
+        grid.uuid = group.uuid;
+      }
+    }
+  }
+}
+async function featuresToGrids(features) {
+  let allNewGrids = [];
+  for (let i = 0; i < features.length; i++) {
+    const imageShp = features[i];
+    let shps = turf_geometry.filterGrids(
+      turf_geometry.calcGrids(imageShp, 10, 10)
+    );
+    let gridsFeature = shps.map((grid) => grid.properties.detail);
+    let grids = await gridCtrl.addStatus(gridsFeature);
+    if (grids && grids.length) allNewGrids.push(...grids);
+  }
+  return allNewGrids;
 }
 
 function changeProcessed(group) {}

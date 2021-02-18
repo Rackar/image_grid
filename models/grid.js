@@ -12,6 +12,7 @@ var GridSchema = new Schema(
     cloudperce: String,
     batch: String,
     tarsize: String,
+    uuid: String,
     status: {
       type: String,
       enum: ["init", "skiped", "backup", "processing", "processed", "invalid"],
