@@ -7,7 +7,11 @@ const shpwrite = require("../libs/shp-write");
 
 const ALI_API = require("./ali_api");
 
-// readShapeFile();
+const latSecs = 10,
+  longSecs = 10;
+
+// findImagesInFeature()
+// readShapeFile()
 async function readShapeFile(url = "./myshapes/test_end") {
   let msg = "";
   // http服务器下的test.shp或者程序根目录下的相对路径或绝对路径
@@ -43,6 +47,133 @@ async function readShapeFile(url = "./myshapes/test_end") {
   return msg;
 }
 
+//废弃
+async function singleTask(geometryBefore, geometryAfter) {
+  if (!geometryBefore) {
+    geometryBefore = {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [
+              104,
+              41,
+            ],
+            [
+              105,
+              41,
+            ],
+            [
+              105,
+              42,
+            ],
+            [
+              104,
+              42,
+            ],
+            [
+              104,
+              41,
+            ],
+          ],
+        ],
+      },
+      properties: {
+        filename: "ZY02C_HRC_E105.1_N41.2_20200527_L1C0004586511.tar.gzaa",
+        batch: "202005300156540",
+        tarsize: "651853029",
+        satellite: "ZY02C",
+        sensorid: "HRC",
+        acquisitio: {
+        },
+        cloudperce: "8",
+        orbitid: "44171",
+        scenepath: "27",
+        scenerow: "105",
+      },
+    }
+    geometryAfter = {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [
+              104.5,
+              41,
+            ],
+            [
+              105.5,
+              41,
+            ],
+            [
+              105.5,
+              42,
+            ],
+            [
+              104.5,
+              42,
+            ],
+            [
+              104.5,
+              41,
+            ],
+          ],
+        ],
+      },
+      properties: {
+        filename: "ZY02C_HRC_E105.1_N41.2_20200527_L1C0004586511.tar.gzaa",
+        batch: "202005300156540",
+        tarsize: "651853029",
+        satellite: "ZY02C",
+        sensorid: "HRC",
+        acquisitio: {
+        },
+        cloudperce: "8",
+        orbitid: "44171",
+        scenepath: "27",
+        scenerow: "105",
+      },
+    }
+  }
+  let geometry = turf_geometry.intersect(geometryBefore, geometryAfter)
+  let allNewGrids = [];
+  let msg = ""
+  allNewGrids = await featuresToGrids([geometry]);
+  msg += "，涉及格网" + allNewGrids.length;
+  let uniqueBackupArray = optimizeImages(allNewGrids);
+  msg += "，待处理非重格网" + uniqueBackupArray.length;
+  let group = gridsToGroupImage(uniqueBackupArray);
+  groupImagesToShp(group);
+  addUuidToGrids(allNewGrids, group);
+  //更新数据库 滞后
+  await insertToDatabase(allNewGrids);
+  //进行处理发送命令
+  await beginProcessing(group);
+  //修改数据库状态
+  await changeProcessed(group);
+  msg += `，任务数量为${group.length}，数据库更新条数为${allNewGrids.length}`;
+}
+
+async function forceProcessWithTwoImages(filenameBefore, filenameAfter) {
+  let newDomName = getStandardFilename(filenameAfter);
+  let oldDomName = getStandardFilename(filenameBefore);
+  let uuid = ALI_API.guid()
+  let result = await Grid.updateMany({ filename: filenameAfter }, { status: "processing" });
+
+  if (result && result.length) {
+    console.log("区域涉及影像", images.length);
+  } else {
+    console.log("未找到数据");
+  }
+
+  ALI_API.upload_task(newDomName, oldDomName, "", uuid);
+  return result
+}
+
+
+
 function addUuidToGrids(gridsArr, groupArr) {
   for (let i = 0; i < groupArr.length; i++) {
     const group = groupArr[i];
@@ -71,7 +202,7 @@ async function featuresToGrids(features) {
   for (let i = 0; i < features.length; i++) {
     const imageShp = features[i];
     let shps = turf_geometry.filterGrids(
-      turf_geometry.calcGrids(imageShp, 10, 10)
+      turf_geometry.calcGrids(imageShp, longSecs, latSecs)
     );
     let gridsFeature = shps.map((grid) => grid.properties.detail);
     let grids = await gridCtrl.addStatus(gridsFeature);
@@ -79,8 +210,57 @@ async function featuresToGrids(features) {
   }
   return allNewGrids;
 }
+async function findImagesInFeature(feature) {
+  if (!feature) {
+    feature = {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [
+              104,
+              41,
+            ],
+            [
+              105,
+              41,
+            ],
+            [
+              105,
+              42,
+            ],
+            [
+              104,
+              42,
+            ],
+            [
+              104,
+              41,
+            ],
+          ],
+        ],
+      },
+    }
+  }
+  let shps = turf_geometry.filterGrids(
+    turf_geometry.calcGrids(feature, longSecs, latSecs)
+  );
+  let gridIds = shps.map((grid) => grid.properties.detail.gridId);
+  let result = await Grid.find({ gridId: { $in: gridIds } });
+  let images =
+    [
+      ...new Set(result.map(grid => grid.filename)),
+    ];
+  if (images && images.length) {
+    console.log("区域涉及影像", images.length);
+  } else {
+    console.log("未找到数据");
+  }
+  return images
+}
 
-function changeProcessed(group) {}
+function changeProcessed(group) { }
 
 function beginProcessing(group) {
   for (let i = 0; i < group.length; i++) {
@@ -318,3 +498,5 @@ function generateShp(features, filename) {
 }
 
 exports.readShapeFile = readShapeFile;
+exports.forceProcessWithTwoImages = forceProcessWithTwoImages
+exports.findImagesInFeature = findImagesInFeature

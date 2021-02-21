@@ -41,7 +41,7 @@ let shpAdd = async function (ctx, next) {
   };
 };
 
-async function changeStatus() {
+async function changeStatus(ctx, next) {
   let gridId = ctx.request.body.gridID;
   let filename = ctx.request.body.filename;
   let status = ctx.request.body.status; //processed,invalid
@@ -79,9 +79,9 @@ async function processComplete(ctx, next) {
     };
   }
 }
-var total = async function (ctx, next) {
-  // let id = ctx.params.id;
-  let grids = await Grid.find({});
+let total = async function (ctx, next) {
+  let params = ctx.query || {};
+  let grids = await Grid.find(params);
   if (grids) {
     ctx.body = {
       status: 1,
@@ -91,9 +91,36 @@ var total = async function (ctx, next) {
   }
 };
 
-router.get("/grids", total);
+let getImages = async function (ctx, next) {
+  let params = ctx.query || {};
+  let images = await main.findImagesInFeature(params)
+  if (images) {
+    ctx.body = {
+      status: 1,
+      msg: "全部涉及的影像名",
+      data: images,
+    };
+  }
+};
+
+let forceProcess = async function (ctx, next) {
+  let params = ctx.query || {};
+  let res = await main.forceProcessWithTwoImages(params.oldFilename, params.newFilename)
+  if (res) {
+    ctx.body = {
+      status: 1,
+      msg: "已更新处理状态",
+      data: res,
+    };
+  }
+};
+
+
+router.get("/grids", total); //查询数据库，可用query传入筛选参数
 router.post("/grids", add);
 router.put("/grids", changeStatus);
 router.post("/shape", shpAdd); //传入url，为shp文件的路径，开始添加影像
 router.put("/shape", processComplete); //传入uuid，将本批次的status由processing改为processed
+router.get("/images", getImages); //获取范围所包含的影像。查询数据库，可用query传入筛选参数
+router.get("/forceprocess", forceProcess); //获取范围所包含的影像。查询数据库，可用query传入筛选参数
 module.exports = router;

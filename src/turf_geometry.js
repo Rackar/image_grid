@@ -112,8 +112,8 @@ function calcGrids(imagePolygon, longSection, latSection) {
       //   }
       grid.properties.detail = {
         containStatus,
-        acquisitio: imagePolygon.properties.acquisitio,
-        filename: imagePolygon.properties.filename,
+        acquisitio: imagePolygon.properties && imagePolygon.properties.acquisitio,
+        filename: imagePolygon.properties && imagePolygon.properties.filename,
         gridId: calcGridId(long, lat, longSection, latSection),
       };
       grids.push(grid);
@@ -133,6 +133,9 @@ function filterGrids(grids) {
 function contain(imagePoly, gridPoly) {
   return turf.booleanContains(imagePoly, gridPoly);
 }
+function intersect(poly1, poly2) {
+  return turf.intersect(poly1, poly2);
+}
 
 console.log(prefixNumLength(2, 2));
 
@@ -150,4 +153,5 @@ function prefixNumLength(num, length) {
 exports.testUpdateGrids = testUpdateGrids;
 exports.filterGrids = filterGrids;
 exports.calcGrids = calcGrids;
+exports.intersect = intersect;
 exports.calcPolygonFromGridId = calcPolygonFromGridId;
