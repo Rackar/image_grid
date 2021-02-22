@@ -4,6 +4,8 @@ const turf_geometry = require("../../src/turf_geometry");
 const gridCtrl = require("../../src/gridCtrl");
 const main = require("../../src/main");
 
+router.prefix("/api");
+
 var add = async function (ctx, next) {
   let grids = ctx.request.body.grids;
   if (!grids) {
