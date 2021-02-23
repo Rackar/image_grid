@@ -23,9 +23,11 @@ async function readShapeFile(url = "./myshapes/test_end") {
         let allNewGrids = [];
         allNewGrids = await featuresToGrids(geojson.features);
         msg += "，涉及格网" + allNewGrids.length;
+        //主要优化与查重逻辑
         let uniqueBackupArray = optimizeImages(allNewGrids);
         msg += "，待处理非重格网" + uniqueBackupArray.length;
         let group = gridsToGroupImage(uniqueBackupArray);
+        //生产shp文件
         groupImagesToShp(group);
         addUuidToGrids(allNewGrids, group);
         //更新数据库 滞后

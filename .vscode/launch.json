@@ -8,14 +8,18 @@
       "type": "node",
       "request": "launch",
       "name": "启动程序",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}\\src\\main.js"
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}\\src\\dirList.js"
     },
     {
       "type": "node",
       "request": "launch",
       "name": "启动服务器",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}\\bin\\www"
     }
   ]
