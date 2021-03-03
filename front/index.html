@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/vue@next"></script>
+</head>
+
+<body>
+    <div id='app'>
+        <div>map</div>
+        <div> <input type="text"> <button>搜索</button> </div>
+        <div>{{message}}</div>
+
+    </div>
+    <script>
+        const { createApp, ref } = Vue;
+        const App = createApp({
+            setup() {
+                const message = ref('Hello Vue!');
+                return {
+                    message
+                }
+            }
+        })
+        App.mount('#app')
+    </script>
+</body>
+
+</html>

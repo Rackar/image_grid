@@ -85,6 +85,31 @@ let total = async function (ctx, next) {
   let params = ctx.query || {};
   let grids = await Grid.find(params);
   if (grids) {
+    let group = grids.reduce((pre, cur) => {
+      let existIndex = pre.findIndex(
+        (value) =>
+          value.gridId === cur.gridId
+      );
+      if (existIndex !== -1) {
+        pre[existIndex].info.push({
+          filename: cur.filename,
+          previousFilename: cur.previousFilename,
+        });
+        return pre;
+      } else {
+        pre.push({
+          gridId: cur.gridId,
+
+          // uuid: ALI_API.guid(),
+          info: [{
+            filename: cur.filename,
+            previousFilename: cur.previousFilename,
+          }],
+        });
+        return pre;
+      }
+    }, []);
+    console.log(grids.length, group.length)
     ctx.body = {
       status: 1,
       msg: "全部数据",

@@ -49,6 +49,7 @@ async function readShapeFile(url = "./myshapes/test_end") {
   return msg;
 }
 
+
 //废弃
 async function singleTask(geometryBefore, geometryAfter) {
   if (!geometryBefore) {
@@ -158,6 +159,22 @@ async function singleTask(geometryBefore, geometryAfter) {
   msg += `，任务数量为${group.length}，数据库更新条数为${allNewGrids.length}`;
 }
 
+async function forceProcessTwoShapes(fileBefore = "./myshapes/test", fileAfter = "./myshapes/test_end", importToDB = false) {
+  if (importToDB) {
+    return
+  }
+  let DB = []
+  let shapeBefore = await shp(fileBefore)
+  let shpaeAfter = await shp(fileAfter)
+  let allOldGrids = [];
+  allOldGrids = await featuresToGridsNoDB(shapeBefore.features);
+  allOldGrids = await addStatusToGrids(allOldGrids, false, DB)
+
+  let allNewGrids = [];
+  allNewGrids = await featuresToGridsNoDB(shpaeAfter.features);
+  allOldGrids = await addStatusToGrids(allOldGrids, false, DB)
+}
+
 async function forceProcessWithTwoImages(filenameBefore, filenameAfter) {
   let newDomName = getStandardFilename(filenameAfter);
   let oldDomName = getStandardFilename(filenameBefore);
@@ -199,6 +216,7 @@ function addUuidToGrids(gridsArr, groupArr) {
     }
   }
 }
+
 async function featuresToGrids(features) {
   let allNewGrids = [];
   for (let i = 0; i < features.length; i++) {
@@ -212,6 +230,155 @@ async function featuresToGrids(features) {
   }
   return allNewGrids;
 }
+
+async function featuresToGridsNoDB(features) {
+  let allNewGrids = [];
+  for (let i = 0; i < features.length; i++) {
+    const imageShp = features[i];
+    let shps = turf_geometry.filterGrids(
+      turf_geometry.calcGrids(imageShp, longSecs, latSecs)
+    );
+    let gridsFeature = shps.map((grid) => grid.properties.detail);
+    // let grids = await gridCtrl.addStatus(gridsFeature, false, DB);
+    if (gridsFeature && gridsFeature.length) {
+      allNewGrids.push(...gridsFeature);
+      // DB.push(...grids)
+    }
+  }
+  return allNewGrids;
+}
+
+async function addStatusToGrids(grids, UseMongoDB = false, DB) {
+  let ids = [...new Set(grids.map((grid) => grid.gridId))];
+  let existGrids = []
+  if (UseMongoDB) {
+    existGrids = await Grid.find({
+      // occupation: /host/,
+      // "name.last": "Ghost",
+      // age: { $gt: 17, $lt: 66 },
+      status: { $ne: "invalid" },
+      gridId: { $in: ids },
+    });
+  } else {
+    existGrids = DB.filter(existGridinDB => {
+      return ids.includes(existGridinDB.gridId) && existGridinDB.status !== "invalid"
+    })
+  }
+
+
+  let repeatedIds = [],
+    processingIds = [];
+  let updateGrids = []
+  //只要查询不报错，existGrids即为数组，不用管length为0
+  if (existGrids) {
+
+    for (let j = 0; j < grids.length; j++) {
+      let newGrid = grids[j];
+      //按照时间倒排
+      let existGridRecords = [...
+        (existGrids
+          .filter((grid) => grid.gridId === newGrid.gridId)), ...updateGrids]
+        .sort((a, b) => b.acquisitio - a.acquisitio);
+
+      //本格网数据为0
+      if (existGridRecords.length === 0) {
+        newGrid.status = "init";
+        updateGrids.push(newGrid)
+        continue;
+      }
+
+      //本格网仅初始化过，尚未比对
+      if (
+        existGridRecords.filter(
+          (grid) => grid.status === "processing" || grid.status === "processed"
+        ).length === 0
+      ) {
+        let init = existGridRecords.find((grid) => grid.status === "init");
+        if (init && newGrid.filename === init.filename) {
+          repeatedIds.push(j);
+          continue;
+        }
+        if (
+          init &&
+          init.acquisitio &&
+          newGrid.filename !== init.filename &&
+          checkTimeGap(init.acquisitio, newGrid.acquisitio)
+        ) {
+          newGrid.status = "backup";
+          newGrid.previousFilename = init.filename;
+          processingIds.push(j);
+          updateGrids.push(newGrid)
+          continue;
+        }
+      }
+
+      //正常的
+      for (let k = 0; k < existGridRecords.length; k++) {
+        const grid = existGridRecords[k];
+        if (
+          grid.filename === newGrid.filename &&
+          grid.gridId === newGrid.gridId
+        ) {
+          repeatedIds.push(j);
+          ////重复提交记录，需要标记，循环结束后删除
+        }
+
+        if (grid.status === "processing") {
+          continue;
+        } else if (
+          grid.status === "processed" &&
+          checkTimeGap(grid.acquisitio, newGrid.acquisitio)
+        ) {
+          newGrid.status = "backup";
+          newGrid.previousFilename = grid.filename;
+          processingIds.push(j);
+          updateGrids.push(newGrid)
+          continue;
+        }
+      }
+
+      //漏网的
+      if (newGrid.status === "init" || newGrid.status === "processing" || newGrid.status === "backup") {
+      } else {
+        newGrid.status = "skiped";
+        updateGrids.push(newGrid)
+      }
+    }
+  } else {
+    console.log("连接数据库失败");
+  }
+
+  //去掉重复提交任务，测试时屏蔽此代码
+  if (repeatedIds.length) {
+    console.log("重复提交数为", repeatedIds.length);
+    for (let i = repeatedIds.length - 1; i >= 0; i--) {
+      let j = repeatedIds[i];
+      grids.splice(j, 1);
+    }
+  }
+
+  //提交处理队列
+  if (processingIds.length) {
+    console.log("需处理数量为", processingIds.length);
+    // for (let i = 0; i < processingIds.length; i++) {
+    //   let grid = grids[processingIds[i]];
+    //   console.log(grid);
+    // }
+  }
+
+  //更新DB
+  if (UseMongoDB) {
+    await insertToDatabase(updateGrids)
+  } else {
+    DB = DB.concat(...updateGrids)
+  }
+
+
+  return grids;
+}
+
+
+
 async function findImagesInFeature(feature) {
   if (!feature) {
     feature = {

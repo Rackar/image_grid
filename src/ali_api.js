@@ -10,7 +10,9 @@ const config = {
 const fs = require("fs");
 const _app = "construction_change";
 class ALI_API {
-  constructor() {}
+  static CONFIG = config.alibaba_ai
+  constructor() {
+  }
   static guid() {
     //用户自定义，全局唯一，只能包含数字、小写字母、下划线、中划线，最长32个字符
     return "xxxxxxxx_xxxx_4xxx_yxxx_xxxxxxxx".replace(/[xy]/g, function (c) {
