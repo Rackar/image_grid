@@ -11,7 +11,7 @@ const latSecs = 10,
   longSecs = 10;
 
 // findImagesInFeature()
-// readShapeFile()
+readShapeFile()
 async function readShapeFile(url = "./myshapes/test_end") {
   let msg = "";
   // http服务器下的test.shp或者程序根目录下的相对路径或绝对路径
@@ -20,6 +20,7 @@ async function readShapeFile(url = "./myshapes/test_end") {
       async function (geojson) {
         console.log("影像数量为：", geojson.features.length);
         msg += "影像数量为" + geojson.features.length;
+        // let uniqueImages = await checkImageExist(geojson.features)
         let allNewGrids = [];
         allNewGrids = await featuresToGrids(geojson.features);
         msg += "，涉及格网" + allNewGrids.length;
@@ -29,6 +30,7 @@ async function readShapeFile(url = "./myshapes/test_end") {
         let group = gridsToGroupImage(uniqueBackupArray);
         //生产shp文件
         groupImagesToShp(group);
+        //编号对齐
         addUuidToGrids(allNewGrids, group);
         //更新数据库 滞后
         await insertToDatabase(allNewGrids);
@@ -49,6 +51,34 @@ async function readShapeFile(url = "./myshapes/test_end") {
   return msg;
 }
 
+async function checkImageExist(features) {
+  //TODO 内部查重先跳过，认为非重
+  let uniqueFeatures = unique(features, ["properties", "filename"])
+  let filenames = uniqueFeatures.map((grid) => grid.properties.filename);
+  let existGrids = await Grid.find({
+    // occupation: /host/,
+    // "name.last": "Ghost",
+    // age: { $gt: 17, $lt: 66 },
+    status: { $ne: "invalid" },
+    filename: { $in: filenames },
+  });
+  let existFilenames = existGrids.map((grid) => grid.filename)
+  let checkedFeatures = uniqueFeatures.filter(feature => !existFilenames.includes(feature.properties.filename))
+  return checkedFeatures;
+}
+
+//对象数组根据某一属性去重
+function unique(arr, keys = ["properties", "filename"]) {
+  return arr.reduce((prev, cur) => prev.some(pre => {
+    let p, c
+    for (let i = 0; i < keys.length; i++) {
+      let key = keys[i]
+      p = p ? p[key] : pre[key]
+      c = c ? c[key] : cur[key]
+    }
+    return p === c
+  }) ? prev : [...prev, cur], []);
+}
 
 //废弃
 async function singleTask(geometryBefore, geometryAfter) {
@@ -166,6 +196,8 @@ async function forceProcessTwoShapes(fileBefore = "./myshapes/test", fileAfter =
   let DB = []
   let shapeBefore = await shp(fileBefore)
   let shpaeAfter = await shp(fileAfter)
+  let uniqueImagesBefore = await checkImageExist(shapeBefore)
+  let uniqueImagesAfter = await checkImageExist(shpaeAfter)
   let allOldGrids = [];
   allOldGrids = await featuresToGridsNoDB(shapeBefore.features);
   allOldGrids = await addStatusToGrids(allOldGrids, false, DB)
