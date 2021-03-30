@@ -103,7 +103,7 @@ async function addStatus(grids, UseDB = true, DB = []) {
 
   //提交处理队列
   if (processingIds.length) {
-    console.log("需处理数量为", processingIds.length);
+    // console.log("需处理数量为", processingIds.length);
     // for (let i = 0; i < processingIds.length; i++) {
     //   let grid = grids[processingIds[i]];
     //   console.log(grid);
@@ -147,8 +147,8 @@ async function getExistGirds(grids, oldGrids) {
 
 }
 function checkTimeGap(beforeTime, afterTime) {
-  //检查时间是否符合要求，测试时屏蔽此代码
-  return afterTime - beforeTime > 7 * 24 * 3600 * 1000;
+  //检查时间是否符合要求，测试时屏蔽此代码。TODO 添加了转换类型
+  return new Date(afterTime) - new Date(beforeTime) > 10 * 24 * 3600 * 1000;
   // return true;
 }
 

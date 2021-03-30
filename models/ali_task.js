@@ -1,19 +1,13 @@
 var mongoose = require("../api/db_mongoose");
 var Schema = mongoose.Schema;
 
-var GridSchema = new Schema(
+var AliTaskSchema = new Schema(
   {
-    gridId: String,
     // imageId: String,
     filename: String,
     previousFilename: String,
-    acquisitio: Date,
-    satellite: String,
-    cloudperce: String,
-    batch: String,
-    tarsize: String,
+    shp: String,
     uuid: String,
-    importBatch: String,
     status: {
       type: String,
       enum: ["init", "skiped", "backup", "processing", "processed", "invalid"],
@@ -22,7 +16,7 @@ var GridSchema = new Schema(
   // ,
   // { timestamps: true }
 );
-module.exports = mongoose.model("Grid", GridSchema);
+module.exports = mongoose.model("AliTask", AliTaskSchema);
 // acquisitio:Wed May 27 2020 00:00:00 GMT+0800 (GMT+08:00)
 // sensorid:'PMS'
 // tarsize:'1974970984'

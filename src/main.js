@@ -7,22 +7,53 @@ const shpwrite = require("../libs/shp-write");
 
 const ALI_API = require("./ali_api");
 
-const latSecs = 10,
-  longSecs = 10;
+const latSecs = 40,
+  longSecs = 40;
+const params = {
+  changguang: {
+    filename: "proId",
+    acquisitio: "time",
+    cloudperce: "cloud",
+    angle: 4.5,
+    elevation: 24.6066,
+    imageGsd: 0.76
+  },
+  zrzyb: {
+    filename: "filename",
+    acquisitio: "acquisitio",
+    cloudperce: "cloudperce",
+  }
+}
 
 // findImagesInFeature()
-readShapeFile()
-async function readShapeFile(url = "./myshapes/test_end") {
+readShapeFile("./myshapes/02", 'changguang')
+async function readShapeFile(url = "./myshapes/test_end", type = "") {
   let msg = "";
   // http服务器下的test.shp或者程序根目录下的相对路径或绝对路径
   await shp(url)
     .then(
       async function (geojson) {
-        console.log("影像数量为：", geojson.features.length);
-        msg += "影像数量为" + geojson.features.length;
-        // let uniqueImages = await checkImageExist(geojson.features)
+        let features = geojson.features
+        if (type === "changguang") {
+          features = geojson.features.map(feature => {
+            let t = feature
+            return {
+              type: feature.type,
+              geometry: feature.geometry,
+              properties: {
+                filename: feature.properties.proId + "_PAN_funse.tif", //TODO 这里硬改写了长光文件名，添加了正射后缀
+                acquisitio: feature.properties.time,
+                cloudperce: feature.properties.cloud
+              }
+            }
+          }
+          )
+        }
+        console.log("影像数量为：", features.length);
+        msg += "影像数量为" + features.length;
+        let uniqueImages = await checkImageExist(features)
         let allNewGrids = [];
-        allNewGrids = await featuresToGrids(geojson.features);
+        allNewGrids = await featuresToGrids(uniqueImages);
         msg += "，涉及格网" + allNewGrids.length;
         //主要优化与查重逻辑
         let uniqueBackupArray = optimizeImages(allNewGrids);
@@ -36,7 +67,7 @@ async function readShapeFile(url = "./myshapes/test_end") {
         await insertToDatabase(allNewGrids);
         //进行处理发送命令
         await beginProcessing(group);
-        //修改数据库状态
+        //TODO 修改数据库状态
         await changeProcessed(group);
         msg += `，任务数量为${group.length}，数据库更新条数为${allNewGrids.length}`;
       },
@@ -59,7 +90,7 @@ async function checkImageExist(features) {
     // occupation: /host/,
     // "name.last": "Ghost",
     // age: { $gt: 17, $lt: 66 },
-    status: { $ne: "invalid" },
+    // status: { $ne: "invalid" },
     filename: { $in: filenames },
   });
   let existFilenames = existGrids.map((grid) => grid.filename)
@@ -189,6 +220,58 @@ async function singleTask(geometryBefore, geometryAfter) {
   msg += `，任务数量为${group.length}，数据库更新条数为${allNewGrids.length}`;
 }
 
+async function checkMainLogic(newGrids, oldGrids) {
+  //主要逻辑
+  return newGrids
+}
+
+async function saveToDB(gridsResultTosave) {
+
+}
+
+async function redo(url = "./myshapes/test") {
+  let shape = await shp(fileBefore)
+  let uniqueImages = await checkImageExist(shape) //有查数据库
+  let importGrids = [];
+  importGrids = await featuresToGridsNoDB(uniqueImages);
+  let existGrids = []
+  existGrids = await getOldGrids(importGrids)
+
+  let gridsResultTosave = checkMainLogic(importGrids, existGrids)
+  saveToDB(gridsResultTosave)
+  let group = gridsToGroupImage(gridsResultTosave);
+  //生产shp文件
+  groupImagesToShp(group);
+  //编号对齐
+  addUuidToGrids(gridsResultTosave, group);
+  //更新数据库 滞后
+  await insertToDatabase(allNewGrids);
+  //进行处理发送命令
+  await beginProcessing(group);
+  //修改数据库状态
+  await changeProcessed(group);
+
+  // let allAddedStatusGrids = await addStatusToGrids(importGrids)
+}
+
+async function getOldGrids(grids, UseMongoDB = true, DB = []) {
+  let ids = [...new Set(grids.map((grid) => grid.gridId))];
+  let existGrids = []
+  if (UseMongoDB) {
+    existGrids = await Grid.find({
+      // occupation: /host/,
+      // "name.last": "Ghost",
+      // age: { $gt: 17, $lt: 66 },
+      status: { $ne: "invalid" },
+      gridId: { $in: ids },
+    });
+  } else {
+    existGrids = DB.filter(existGridinDB => {
+      return ids.includes(existGridinDB.gridId) && existGridinDB.status !== "invalid"
+    })
+  }
+}
+
 async function forceProcessTwoShapes(fileBefore = "./myshapes/test", fileAfter = "./myshapes/test_end", importToDB = false) {
   if (importToDB) {
     return
@@ -280,7 +363,113 @@ async function featuresToGridsNoDB(features) {
   return allNewGrids;
 }
 
-async function addStatusToGrids(grids, UseMongoDB = false, DB) {
+async function checkMainLogic(grids, existGrids) {
+  let ids = [...new Set(grids.map((grid) => grid.gridId))];
+  let tempDB = []
+  for (let i = 0; i < grids.length; i++) {
+    const gird = grids[i];
+
+  }
+
+
+  let processingIds = [];
+  let updateGrids = []
+  //只要查询不报错，existGrids即为数组，不用管length为0
+  if (existGrids) {
+
+    for (let j = 0; j < grids.length; j++) {
+      let newGrid = grids[j];
+      //按照时间倒排
+      let existGridRecords = [...
+        (existGrids
+          .filter((grid) => grid.gridId === newGrid.gridId)),
+      ...(updateGrids
+        .filter((grid) => grid.gridId === newGrid.gridId))]
+        .sort((a, b) => b.acquisitio - a.acquisitio);
+
+      //本格网数据为0
+      if (existGridRecords.length === 0) {
+        newGrid.status = "init";
+        updateGrids.push(newGrid)
+        continue;
+      }
+
+      //本格网仅初始化过，尚未比对
+      if (
+        existGridRecords.filter(
+          (grid) => grid.status === "processing" || grid.status === "processed"
+        ).length === 0
+      ) {
+        let init = existGridRecords.find((grid) => grid.status === "init");
+        if (init && newGrid.filename === init.filename) {
+          continue;
+        }
+        if (
+          init &&
+          init.acquisitio &&
+          newGrid.filename !== init.filename &&
+          checkTimeGap(init.acquisitio, newGrid.acquisitio)
+        ) {
+          newGrid.status = "backup";
+          newGrid.previousFilename = init.filename;
+          processingIds.push(j);
+          updateGrids.push(newGrid)
+          continue;
+        }
+      }
+
+      //正常的
+      for (let k = 0; k < existGridRecords.length; k++) {
+        const grid = existGridRecords[k];
+
+        if (grid.status === "processing") {
+          continue;
+        } else if (
+          grid.status === "processed" &&
+          checkTimeGap(grid.acquisitio, newGrid.acquisitio)
+        ) {
+          newGrid.status = "backup";
+          newGrid.previousFilename = grid.filename;
+          processingIds.push(j);
+          updateGrids.push(newGrid)
+          continue;
+        }
+      }
+
+      //漏网的
+      if (newGrid.status === "init" || newGrid.status === "processing" || newGrid.status === "backup") {
+      } else {
+        newGrid.status = "skiped";
+        updateGrids.push(newGrid)
+      }
+    }
+  } else {
+    console.log("连接数据库失败");
+  }
+
+
+
+  //提交处理队列
+  if (processingIds.length) {
+    console.log("需处理数量为", processingIds.length);
+    // for (let i = 0; i < processingIds.length; i++) {
+    //   let grid = grids[processingIds[i]];
+    //   console.log(grid);
+    // }
+  }
+
+  //更新DB
+  if (UseMongoDB) {
+    await insertToDatabase(updateGrids)
+  } else {
+    DB = DB.concat(...updateGrids)
+  }
+
+
+  return grids;
+}
+
+async function addStatusToGrids(grids, UseMongoDB = false, DB = []) {
   let ids = [...new Set(grids.map((grid) => grid.gridId))];
   let existGrids = []
   if (UseMongoDB) {
@@ -464,12 +653,17 @@ async function findImagesInFeature(feature) {
 function changeProcessed(group) { }
 
 function beginProcessing(group) {
+  let list = []
   for (let i = 0; i < group.length; i++) {
     const pair = group[i];
-    let newDomName = getStandardFilename(pair.filename);
-    let oldDomName = getStandardFilename(pair.previousFilename);
-    ALI_API.upload_task(newDomName, oldDomName, pair.uuid, pair.uuid);
+    let previousFilename = getStandardFilename(pair.previousFilename);
+    let filename = getStandardFilename(pair.filename);
+
+    let json = { previousFilename, filename, shp: pair.uuid, SESSION_ID: pair.uuid }
+    list.push(json)
+    // ALI_API.upload_task(previousFilename, filename, pair.uuid, pair.uuid); //TODO 自动发任务暂时屏蔽
   }
+  fs.writeFileSync("./shp/tasks.json", JSON.stringify(list, null, 2), "");
 }
 
 function getStandardFilename(filename) {
@@ -478,7 +672,11 @@ function getStandardFilename(filename) {
 }
 
 async function insertToDatabase(allBackupGrids) {
-  var arr = allBackupGrids.map((grid) => new Grid(grid));
+  let importBatch = ALI_API.guid()
+  var arr = allBackupGrids.map((grid) => {
+    grid.importBatch = importBatch
+    return new Grid(grid)
+  });
   let result = await Grid.insertMany(arr);
   if (result && result.length) {
     console.log("插入成功", result.length);

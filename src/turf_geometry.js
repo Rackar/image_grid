@@ -26,7 +26,7 @@ function calcExtendBoundingBoxWithTurf(imagePolygon, longSection, latSection) {
   let bbox = turf.bbox(imagePolygon);
   if (!bbox || bbox.length != 4) return new Error("外包矩形计算出错");
   let [MinX, MinY, MaxX, MaxY] = [...bbox];
-  console.log("影像外包矩形：", MinX, MinY, MaxX, MaxY);
+  // console.log("影像外包矩形：", MinX, MinY, MaxX, MaxY);
   let minLong =
     Math.floor((MinX - Math.floor(MinX)) * longSection) / longSection +
     Math.floor(MinX);
@@ -107,9 +107,9 @@ function calcGrids(imagePolygon, longSection, latSection) {
       let lat = ExtendBbox[1] + Math.round((j / latSection) * 1000) / 1000;
       let grid = generateGrid(long, lat, longSection, latSection);
       let containStatus = contain(imagePolygon, grid);
-      //   if (containStatus) {
-      //     console.log("contain");
-      //   }
+      if (!containStatus) {
+        containStatus = checkOverlap(imagePolygon, grid)
+      }
       grid.properties.detail = {
         containStatus,
         acquisitio: imagePolygon.properties && imagePolygon.properties.acquisitio,
@@ -126,13 +126,25 @@ function filterGrids(grids) {
   let filtered = grids.filter(
     (grid) => grid.properties.detail.containStatus === true
   );
-  console.log("涉及格网的数量", filtered.length);
+  // console.log("涉及格网的数量", filtered.length);
   return filtered;
 }
 
 function contain(imagePoly, gridPoly) {
   return turf.booleanContains(imagePoly, gridPoly);
 }
+
+function checkOverlap(poly1, poly2) {
+  let lap = turf.intersect(poly1, poly2);
+  if (!lap) {
+    return false
+  }
+  let inlap = turf.area(lap)
+  let grid = turf.area(poly2)
+  let v = inlap / grid
+  return v > 0.6
+}
+
 function intersect(poly1, poly2) {
   return turf.intersect(poly1, poly2);
 }

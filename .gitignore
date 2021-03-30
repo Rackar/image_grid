@@ -9,3 +9,5 @@ node_modules
 *.shp.xml
 *.lock
 *.xml
+*.cpg
+tasks.json
