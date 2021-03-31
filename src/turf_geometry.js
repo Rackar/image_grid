@@ -142,7 +142,7 @@ function checkOverlap(poly1, poly2) {
   let inlap = turf.area(lap)
   let grid = turf.area(poly2)
   let v = inlap / grid
-  return v > 0.6
+  return v > 0.7
 }
 
 function intersect(poly1, poly2) {

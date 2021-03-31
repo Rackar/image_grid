@@ -7,8 +7,8 @@ const shpwrite = require("../libs/shp-write");
 
 const ALI_API = require("./ali_api");
 
-const latSecs = 40,
-  longSecs = 40;
+const latSecs = 50,
+  longSecs = 50;
 const params = {
   changguang: {
     filename: "proId",
@@ -26,14 +26,16 @@ const params = {
 }
 
 // findImagesInFeature()
-readShapeFile("./myshapes/02", 'changguang')
+readShapeFile("./myshapes/cg202102b", 'changguang')
 async function readShapeFile(url = "./myshapes/test_end", type = "") {
   let msg = "";
+  let time0 = new Date()
   // http服务器下的test.shp或者程序根目录下的相对路径或绝对路径
   await shp(url)
     .then(
       async function (geojson) {
         let features = geojson.features
+        let time1 = new Date()
         if (type === "changguang") {
           features = geojson.features.map(feature => {
             let t = feature
@@ -50,26 +52,32 @@ async function readShapeFile(url = "./myshapes/test_end", type = "") {
           )
         }
         console.log("影像数量为：", features.length);
-        msg += "影像数量为" + features.length;
+        msg += "影像数量为" + features.length + `，读取耗时${(time1 - time0) / 1000}`;
         let uniqueImages = await checkImageExist(features)
         let allNewGrids = [];
         allNewGrids = await featuresToGrids(uniqueImages);
         msg += "，涉及格网" + allNewGrids.length;
         //主要优化与查重逻辑
         let uniqueBackupArray = optimizeImages(allNewGrids);
-        msg += "，待处理非重格网" + uniqueBackupArray.length;
+
         let group = gridsToGroupImage(uniqueBackupArray);
+        let time2 = new Date()
+        msg += "，待处理非重格网" + uniqueBackupArray.length + `，计算耗时${(time2 - time1) / 1000}`;
         //生产shp文件
         groupImagesToShp(group);
+        let time3 = new Date()
+        msg += `，任务数量为${group.length}，保存shp耗时${(time3 - time2) / 1000}`;
         //编号对齐
         addUuidToGrids(allNewGrids, group);
         //更新数据库 滞后
         await insertToDatabase(allNewGrids);
+
         //进行处理发送命令
         await beginProcessing(group);
         //TODO 修改数据库状态
         await changeProcessed(group);
-        msg += `，任务数量为${group.length}，数据库更新条数为${allNewGrids.length}`;
+        let time4 = new Date()
+        msg += `，数据库更新条数为${allNewGrids.length}，耗时${(time4 - time3) / 1000}，任务总耗时${(time4 - time0) / 1000}`;
       },
       (e) => {
         console.log("shp读取出错，检查路径", e);
