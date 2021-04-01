@@ -1,5 +1,6 @@
 const shp = require("../libs/shp-read");
 const fs = require("fs");
+const log = require('single-line-log').stdout;
 const turf_geometry = require("./turf_geometry");
 const gridCtrl = require("./gridCtrl");
 const Grid = require("../models/grid");
@@ -26,9 +27,9 @@ const params = {
 }
 
 // findImagesInFeature()
-readShapeFile("./myshapes/cg202102b", 'changguang')
+readShapeFile("./myshapes/cg202101", 'changguang')
 async function readShapeFile(url = "./myshapes/test_end", type = "") {
-  let msg = "";
+  let msg = "" + url;
   let time0 = new Date()
   // http服务器下的test.shp或者程序根目录下的相对路径或绝对路径
   await shp(url)
@@ -54,19 +55,25 @@ async function readShapeFile(url = "./myshapes/test_end", type = "") {
         console.log("影像数量为：", features.length);
         msg += "影像数量为" + features.length + `，读取耗时${(time1 - time0) / 1000}`;
         let uniqueImages = await checkImageExist(features)
+        let time1_1 = new Date()
+        msg += `，检查重复耗时${(time1_1 - time1) / 1000}`;
         let allNewGrids = [];
         allNewGrids = await featuresToGrids(uniqueImages);
-        msg += "，涉及格网" + allNewGrids.length;
+        let time1_2 = new Date()
+
+        msg += taskLog("，涉及格网" + allNewGrids.length);
+        msg += taskLog(`，转换格网耗时${(time1_2 - time1_1) / 1000}`);
         //主要优化与查重逻辑
         let uniqueBackupArray = optimizeImages(allNewGrids);
-
+        let time1_3 = new Date()
+        msg += taskLog(`，优化调整耗时${(time1_3 - time1_2) / 1000}`);
         let group = gridsToGroupImage(uniqueBackupArray);
         let time2 = new Date()
-        msg += "，待处理非重格网" + uniqueBackupArray.length + `，计算耗时${(time2 - time1) / 1000}`;
+        msg += taskLog("，待处理非重格网" + uniqueBackupArray.length + `，分组耗时${(time2 - time1_3) / 1000}，总计算耗时${(time2 - time1) / 1000}`);
         //生产shp文件
         groupImagesToShp(group);
         let time3 = new Date()
-        msg += `，任务数量为${group.length}，保存shp耗时${(time3 - time2) / 1000}`;
+        msg += taskLog(`，任务数量为${group.length}，保存shp耗时${(time3 - time2) / 1000}`);
         //编号对齐
         addUuidToGrids(allNewGrids, group);
         //更新数据库 滞后
@@ -77,7 +84,8 @@ async function readShapeFile(url = "./myshapes/test_end", type = "") {
         //TODO 修改数据库状态
         await changeProcessed(group);
         let time4 = new Date()
-        msg += `，数据库更新条数为${allNewGrids.length}，耗时${(time4 - time3) / 1000}，任务总耗时${(time4 - time0) / 1000}`;
+        msg += taskLog(`，数据库更新条数为${allNewGrids.length}，耗时${(time4 - time3) / 1000}，任务总耗时${(time4 - time0) / 1000}。\n`);
+        fs.writeFileSync("./log.txt", msg, { flag: "a" });
       },
       (e) => {
         console.log("shp读取出错，检查路径", e);
@@ -90,6 +98,10 @@ async function readShapeFile(url = "./myshapes/test_end", type = "") {
   return msg;
 }
 
+function taskLog(text) {
+  log(text)
+  return text
+}
 async function checkImageExist(features) {
   //TODO 内部查重先跳过，认为非重
   let uniqueFeatures = unique(features, ["properties", "filename"])
@@ -353,6 +365,36 @@ async function featuresToGrids(features) {
   }
   return allNewGrids;
 }
+async function featuresToGridsRE(features) {
+  let allNewGrids = [];
+  let girdsList = [];
+  let result = []
+  for (let i = 0; i < features.length; i++) {
+    const imageShp = features[i];
+    let shps = turf_geometry.filterGrids(
+      turf_geometry.calcGrids(imageShp, longSecs, latSecs)
+    );
+    let gridsFeature = shps.map((grid) => grid.properties.detail);
+    girdsList.push(gridsFeature)
+    if (gridsFeature && gridsFeature.length) allNewGrids.push(...gridsFeature);
+  }
+  let ids = allNewGrids.map((grid) => grid.gridId);
+  const existGrids = await Grid.find({
+    // occupation: /host/,
+    // "name.last": "Ghost",
+    // age: { $gt: 17, $lt: 66 },
+    status: { $ne: "invalid" },
+    gridId: { $in: ids },
+  });
+  for (let j = 0; j < girdsList.length; j++) {
+    let grids = girdsList[j];
+    let resultGrids = await gridCtrl.addStatus(grids, existGrids);
+    if (resultGrids && resultGrids.length) result.push(...resultGrids);
+  }
+  return result;
+}
+
+
 
 async function featuresToGridsNoDB(features) {
   let allNewGrids = [];
