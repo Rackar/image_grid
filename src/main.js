@@ -35,10 +35,11 @@ const params = {
 
 // readShapeFile("./myshapes/01", 'changguang')
 // readJSONFile("./myshapes/01.json", 'changguang')
-readJSONFile("./myshapes/t.json", 'biaozhun')
+readJSONFile("./myshapes/nob.geojson", 'biaozhun')
 
 async function readJSONFile(url = "./myshapes/01.json", type = "") {
   let string = fs.readFileSync(url, 'utf-8')
+  // string = string.toString('utf8').replace(/^\uFEFF/, '') //去除bom文件头
   let geojson = JSON.parse(string)
   workflow(geojson, url, type)
 }
@@ -85,7 +86,7 @@ async function workflow(geojson, url, type) {
         type: feature.type,
         geometry: feature.geometry,
         properties: {
-          filename: feature.properties.filename,
+          filename: feature.properties.filename, //标准名.tif 无需修改
           acquisitio: feature.properties.time,
         }
       }
