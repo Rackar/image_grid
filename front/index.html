@@ -7,12 +7,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://unpkg.com/axios"></script>
 </head>
 
 <body>
     <div id='app'>
         <div>map</div>
-        <div> <input type="text"> <button>搜索</button> </div>
+        <div> <input type="text" @click="search"> <button>搜索</button> </div>
+        <div><input type="text" v-model="taskparams"> <button>启动任务</button> </div>
         <div>{{message}}</div>
 
     </div>
@@ -21,6 +23,10 @@
         const App = createApp({
             setup() {
                 const message = ref('Hello Vue!');
+                async function search() {
+                    let tasks = await axios.get("http://localhost:3006/api/tasks")
+                    debugger;
+                }
                 return {
                     message
                 }

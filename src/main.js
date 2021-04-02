@@ -4,6 +4,7 @@ const log = require('single-line-log').stdout;
 const turf_geometry = require("./turf_geometry");
 const gridCtrl = require("./gridCtrl");
 const Grid = require("../models/grid");
+const Task = require("../models/ali_task");
 const shpwrite = require("../libs/shp-write");
 
 const ALI_API = require("./ali_api");
@@ -23,77 +24,108 @@ const params = {
     filename: "filename",
     acquisitio: "acquisitio",
     cloudperce: "cloudperce",
+  },
+  biaozhun: {
+    filename: "filename",
+    acquisitio: "time",
   }
 }
 
 // findImagesInFeature()
-readShapeFile("./myshapes/cg202101", 'changguang')
+
+// readShapeFile("./myshapes/01", 'changguang')
+// readJSONFile("./myshapes/01.json", 'changguang')
+readJSONFile("./myshapes/t.json", 'biaozhun')
+
+async function readJSONFile(url = "./myshapes/01.json", type = "") {
+  let string = fs.readFileSync(url, 'utf-8')
+  let geojson = JSON.parse(string)
+  workflow(geojson, url, type)
+}
+
 async function readShapeFile(url = "./myshapes/test_end", type = "") {
-  let msg = "" + url;
-  let time0 = new Date()
   // http服务器下的test.shp或者程序根目录下的相对路径或绝对路径
   await shp(url)
     .then(
       async function (geojson) {
-        let features = geojson.features
-        let time1 = new Date()
-        if (type === "changguang") {
-          features = geojson.features.map(feature => {
-            let t = feature
-            return {
-              type: feature.type,
-              geometry: feature.geometry,
-              properties: {
-                filename: feature.properties.proId + "_PAN_funse.tif", //TODO 这里硬改写了长光文件名，添加了正射后缀
-                acquisitio: feature.properties.time,
-                cloudperce: feature.properties.cloud
-              }
-            }
-          }
-          )
-        }
-        console.log("影像数量为：", features.length);
-        msg += "影像数量为" + features.length + `，读取耗时${(time1 - time0) / 1000}`;
-        let uniqueImages = await checkImageExist(features)
-        let time1_1 = new Date()
-        msg += `，检查重复耗时${(time1_1 - time1) / 1000}`;
-        let allNewGrids = [];
-        allNewGrids = await featuresToGrids(uniqueImages);
-        let time1_2 = new Date()
-
-        msg += taskLog("，涉及格网" + allNewGrids.length);
-        msg += taskLog(`，转换格网耗时${(time1_2 - time1_1) / 1000}`);
-        //主要优化与查重逻辑
-        let uniqueBackupArray = optimizeImages(allNewGrids);
-        let time1_3 = new Date()
-        msg += taskLog(`，优化调整耗时${(time1_3 - time1_2) / 1000}`);
-        let group = gridsToGroupImage(uniqueBackupArray);
-        let time2 = new Date()
-        msg += taskLog("，待处理非重格网" + uniqueBackupArray.length + `，分组耗时${(time2 - time1_3) / 1000}，总计算耗时${(time2 - time1) / 1000}`);
-        //生产shp文件
-        groupImagesToShp(group);
-        let time3 = new Date()
-        msg += taskLog(`，任务数量为${group.length}，保存shp耗时${(time3 - time2) / 1000}`);
-        //编号对齐
-        addUuidToGrids(allNewGrids, group);
-        //更新数据库 滞后
-        await insertToDatabase(allNewGrids);
-
-        //进行处理发送命令
-        await beginProcessing(group);
-        //TODO 修改数据库状态
-        await changeProcessed(group);
-        let time4 = new Date()
-        msg += taskLog(`，数据库更新条数为${allNewGrids.length}，耗时${(time4 - time3) / 1000}，任务总耗时${(time4 - time0) / 1000}。\n`);
-        fs.writeFileSync("./log.txt", msg, { flag: "a" });
+        workflow(geojson, url, type)
       },
       (e) => {
         console.log("shp读取出错，检查路径", e);
       }
     )
     .catch((e) => {
-      msg = e;
+      console.log(e)
     });
+}
+
+async function workflow(geojson, url, type) {
+  let s = JSON.stringify(geojson)
+  console.log(s)
+
+  let msg = "" + url;
+  let features = geojson.features
+  let time1 = new Date()
+  if (type === "changguang") {
+    features = features.map(feature => {
+      return {
+        type: feature.type,
+        geometry: feature.geometry,
+        properties: {
+          filename: feature.properties.proId + "_PAN_funse.tif", //TODO 这里硬改写了长光文件名，添加了正射后缀
+          acquisitio: feature.properties.time,
+          cloudperce: feature.properties.cloud
+        }
+      }
+    }
+    )
+  } else if (type === "biaozhun") {
+    features = features.map(feature => {
+      return {
+        type: feature.type,
+        geometry: feature.geometry,
+        properties: {
+          filename: feature.properties.filename,
+          acquisitio: feature.properties.time,
+        }
+      }
+    }
+    )
+  }
+  console.log("影像数量为：", features.length);
+  msg += "影像数量为" + features.length;
+  let uniqueImages = await checkImageExist(features)
+  let time1_1 = new Date()
+  msg += `，检查重复耗时${(time1_1 - time1) / 1000}`;
+  let allNewGrids = [];
+  allNewGrids = await featuresToGrids(uniqueImages);
+  let time1_2 = new Date()
+
+  msg += taskLog("，涉及格网" + allNewGrids.length);
+  msg += taskLog(`，转换格网耗时${(time1_2 - time1_1) / 1000}`);
+  //主要优化与查重逻辑
+  let uniqueBackupArray = optimizeImages(allNewGrids);
+  let time1_3 = new Date()
+  msg += taskLog(`，优化调整耗时${(time1_3 - time1_2) / 1000}`);
+  let group = gridsToGroupImage(uniqueBackupArray);
+  let time2 = new Date()
+  msg += taskLog("，待处理非重格网" + uniqueBackupArray.length + `，分组耗时${(time2 - time1_3) / 1000}，总计算耗时${(time2 - time1) / 1000}`);
+  //生产shp文件
+  groupImagesToShp(group);
+  let time3 = new Date()
+  msg += taskLog(`，任务数量为${group.length}，保存shp耗时${(time3 - time2) / 1000}`);
+  //编号对齐
+  addUuidToGrids(allNewGrids, group);
+  //更新数据库 滞后
+  await insertToDatabase(allNewGrids);
+
+  //进行处理发送命令
+  await beginProcessing(group, url);
+  //TODO 修改数据库状态
+  await changeProcessed(group);
+  let time4 = new Date()
+  msg += taskLog(`，数据库更新条数为${allNewGrids.length}，耗时${(time4 - time3) / 1000}，任务总耗时${(time4 - time1) / 1000}。\n`);
+  fs.writeFileSync("./log.txt", msg, { flag: "a" });
   console.log(msg);
   return msg;
 }
@@ -702,18 +734,50 @@ async function findImagesInFeature(feature) {
 
 function changeProcessed(group) { }
 
-function beginProcessing(group) {
+async function beginProcessing(group, url) {
   let list = []
   for (let i = 0; i < group.length; i++) {
     const pair = group[i];
     let previousFilename = getStandardFilename(pair.previousFilename);
     let filename = getStandardFilename(pair.filename);
 
-    let json = { previousFilename, filename, shp: pair.uuid, SESSION_ID: pair.uuid }
+    let json = { previousFilename, filename, shp: pair.uuid, uuid: pair.uuid }
     list.push(json)
     // ALI_API.upload_task(previousFilename, filename, pair.uuid, pair.uuid); //TODO 自动发任务暂时屏蔽
   }
   fs.writeFileSync("./shp/tasks.json", JSON.stringify(list, null, 2), "");
+  await insertTasksToDatabase(list, url)
+}
+
+async function insertTasksToDatabase(tasks, url) {
+  if (tasks && tasks.length) {
+    let now = new Date()
+    url = url || now.toLocaleString()
+    tasks = tasks.map(task => {
+      task.batch = url
+      return task
+    })
+    let result = await Task.insertMany(tasks)
+    if (result && result.length) {
+      console.log("任务插入成功", result.length);
+    } else {
+      console.log("未插入数据库任何记录");
+    }
+  }
+}
+
+async function startAliProcess(params) {
+  let tasks = await Task.find(params)
+  if (tasks && tasks.length) {
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      let { previousFilename, filename, shp } = task
+      await ALI_API.upload_task(previousFilename, filename, shp, task.uuid)
+    }
+  } else {
+    console.log("未找到任何记录");
+  }
+  return true
 }
 
 function getStandardFilename(filename) {
@@ -729,7 +793,7 @@ async function insertToDatabase(allBackupGrids) {
   });
   let result = await Grid.insertMany(arr);
   if (result && result.length) {
-    console.log("插入成功", result.length);
+    console.log("格网插入成功", result.length);
   } else {
     console.log("未插入数据库任何记录");
   }
@@ -949,3 +1013,4 @@ function generateShp(features, filename) {
 exports.readShapeFile = readShapeFile;
 exports.forceProcessWithTwoImages = forceProcessWithTwoImages
 exports.findImagesInFeature = findImagesInFeature
+exports.startAliProcess = startAliProcess

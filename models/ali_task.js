@@ -8,9 +8,11 @@ var AliTaskSchema = new Schema(
     previousFilename: String,
     shp: String,
     uuid: String,
+    batch: String,
     status: {
       type: String,
       enum: ["init", "skiped", "backup", "processing", "processed", "invalid"],
+      default: 'init'
     },
   }
   // ,

@@ -1,5 +1,6 @@
 const router = require("koa-router")();
 const Grid = require("../../models/grid");
+const Task = require("../../models/ali_task");
 const turf_geometry = require("../../src/turf_geometry");
 const gridCtrl = require("../../src/gridCtrl");
 const main = require("../../src/main");
@@ -142,6 +143,30 @@ let forceProcess = async function (ctx, next) {
   }
 };
 
+let getTasks = async function (ctx, next) {
+  let params = ctx.query || {};
+  let res = await Task.find(params)
+  if (res) {
+    ctx.body = {
+      status: 1,
+      msg: "获取任务列表",
+      data: res,
+    };
+  }
+};
+
+let startTasks = async function (ctx, next) {
+  let params = ctx.request.body.params;
+  let res = await main.startAliProcess(params)
+  if (res) {
+    ctx.body = {
+      status: 1,
+      msg: "获取任务列表",
+      data: res,
+    };
+  }
+};
+
 
 router.get("/grids", total); //查询数据库，可用query传入筛选参数
 router.post("/grids", add);
@@ -150,4 +175,7 @@ router.post("/shape", shpAdd); //传入url，为shp文件的路径，开始添�
 router.put("/shape", processComplete); //传入uuid，将本批次的status由processing改为processed
 router.get("/images", getImages); //获取范围所包含的影像。查询数据库，可用query传入筛选参数
 router.get("/forceprocess", forceProcess); //获取范围所包含的影像。查询数据库，可用query传入筛选参数
+router.get("/tasks", getTasks); //查找任务列表
+router.post("/tasks", startTasks); //开始执行任务
+
 module.exports = router;

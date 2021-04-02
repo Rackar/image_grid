@@ -18,6 +18,8 @@ shp 使用 https://github.com/cyclomedia/shp-write 这个 fork 库，polygon 中
 
 如果小块区域不能减少工作量，是否需要判断如何组合，参与计算的影像对数量最小。
 
+未考虑不同后缀名。
+
 ## 数据库查询命令
 
 ```s
