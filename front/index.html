@@ -13,22 +13,36 @@
 <body>
     <div id='app'>
         <div>map</div>
-        <div> <input type="text" @click="search"> <button>搜索</button> </div>
-        <div><input type="text" v-model="taskparams"> <button>启动任务</button> </div>
-        <div>{{message}}</div>
+        <div> {{d.batches}} <button @click="getBatches">检索所有批次</button> </div>
+        <div><input type="text" v-model="d.taskparams"> <button @click="startTasks">启动本批次任务</button> </div>
 
     </div>
     <script>
-        const { createApp, ref } = Vue;
+        const { createApp, ref, reactive } = Vue;
         const App = createApp({
             setup() {
-                const message = ref('Hello Vue!');
+                const d = reactive({
+                    batches: [],
+                    taskparams: ""
+                })
                 async function search() {
                     let tasks = await axios.get("http://localhost:3006/api/tasks")
                     debugger;
                 }
+                async function getBatches() {
+                    let res = await axios.get("http://localhost:3006/api/taskbatch")
+                    d.batches = res.data.data
+                }
+                async function startTasks() {
+                    let q = {
+                        batch: d.taskparams
+                    }
+                    let tasks = await axios.post("http://localhost:3006/api/tasks", { params: q })
+                }
                 return {
-                    message
+                    d,
+                    getBatches,
+                    startTasks
                 }
             }
         })

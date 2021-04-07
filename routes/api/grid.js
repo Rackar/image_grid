@@ -155,6 +155,17 @@ let getTasks = async function (ctx, next) {
   }
 };
 
+let getTaskBatches = async function (ctx, next) {
+  let res = await Task.distinct("batch")
+  if (res) {
+    ctx.body = {
+      status: 1,
+      msg: "获取任务列表",
+      data: res,
+    };
+  }
+};
+
 let startTasks = async function (ctx, next) {
   let params = ctx.request.body.params;
   let res = await main.startAliProcess(params)
@@ -177,5 +188,6 @@ router.get("/images", getImages); //获取范围所包含的影像。查询数�
 router.get("/forceprocess", forceProcess); //获取范围所包含的影像。查询数据库，可用query传入筛选参数
 router.get("/tasks", getTasks); //查找任务列表
 router.post("/tasks", startTasks); //开始执行任务
+router.get("/taskbatch", getTaskBatches); //查找任务列表
 
 module.exports = router;

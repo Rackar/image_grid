@@ -35,7 +35,7 @@ const params = {
 
 // readShapeFile("./myshapes/01", 'changguang')
 // readJSONFile("./myshapes/01.json", 'changguang')
-readJSONFile("./myshapes/nob.geojson", 'biaozhun')
+// readJSONFile("./myshapes/nob.geojson", 'biaozhun')
 
 async function readJSONFile(url = "./myshapes/01.json", type = "") {
   let string = fs.readFileSync(url, 'utf-8')
