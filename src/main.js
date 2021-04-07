@@ -1015,3 +1015,4 @@ exports.readShapeFile = readShapeFile;
 exports.forceProcessWithTwoImages = forceProcessWithTwoImages
 exports.findImagesInFeature = findImagesInFeature
 exports.startAliProcess = startAliProcess
+exports.workflow = workflow

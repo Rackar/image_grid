@@ -178,6 +178,21 @@ let startTasks = async function (ctx, next) {
   }
 };
 
+let test = async function (ctx, next) {
+  let geojson = ctx.request.body.geojson;
+  let url = ctx.request.body.url;
+  geojson = JSON.parse(geojson)
+  // await main.workflow(geojson, url, "biaozhun")
+  // let res = await main.startAliProcess(params)
+  // if (res) {
+  ctx.body = {
+    status: 1,
+    msg: "接收任务",
+    data: { geojson, url },
+    // };
+  }
+};
+
 
 router.get("/grids", total); //查询数据库，可用query传入筛选参数
 router.post("/grids", add);
@@ -189,5 +204,6 @@ router.get("/forceprocess", forceProcess); //获取范围所包含的影像。�
 router.get("/tasks", getTasks); //查找任务列表
 router.post("/tasks", startTasks); //开始执行任务
 router.get("/taskbatch", getTaskBatches); //查找任务列表
+router.post("/geojson", test); //查找任务列表
 
 module.exports = router;
