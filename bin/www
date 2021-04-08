@@ -25,21 +25,21 @@ var port = normalizePort(process.env.PORT || "3006");
 
 var server = http.createServer(app.callback());
 
-if (process.env.NODE_ENV === "production") {
-  //同步读取密钥和签名证书(https)
-  var options = {
-    // key: fs.readFileSync("./key/2910531_talatan.com.key"),
-    // cert: fs.readFileSync("./key/2910531_talatan.com.pem")
-    key: fs.readFileSync("/root/secret/2_www.codingyang.com.key"),
-    cert: fs.readFileSync("/root/secret/1_www.codingyang.com_bundle.crt")
-  };
-  var httpsServer = https.createServer(options, app.callback());
+// if (process.env.NODE_ENV === "production") {
+//   //同步读取密钥和签名证书(https)
+//   var options = {
+//     // key: fs.readFileSync("./key/2910531_talatan.com.key"),
+//     // cert: fs.readFileSync("./key/2910531_talatan.com.pem")
+//     key: fs.readFileSync("/root/secret/2_www.codingyang.com.key"),
+//     cert: fs.readFileSync("/root/secret/1_www.codingyang.com_bundle.crt")
+//   };
+//   var httpsServer = https.createServer(options, app.callback());
 
-  httpsServer.listen(3007);
-  console.log("HTTPS Server start listening on: 3007");
-  httpsServer.on("error", onError);
-  httpsServer.on("listening", onListening);
-}
+//   httpsServer.listen(3007);
+//   console.log("HTTPS Server start listening on: 3007");
+//   httpsServer.on("error", onError);
+//   httpsServer.on("listening", onListening);
+// }
 
 /**
  * Normalize a port into a number, string, or false.
