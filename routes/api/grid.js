@@ -183,12 +183,26 @@ let test = async function (ctx, next) {
   let url = ctx.request.body.url;
   geojson = JSON.parse(geojson)
   // await main.workflow(geojson, url, "biaozhun")
-  // let res = await main.startAliProcess(params)
   // if (res) {
   ctx.body = {
     status: 1,
     msg: "接收任务",
     data: { geojson, url },
+    // };
+  }
+};
+
+let geojson = async function (ctx, next) {
+  let geojson = ctx.request.body.geojson;
+  let url = ctx.request.body.url;
+  geojson = JSON.parse(geojson)
+  let msg = await main.workflow(geojson, url, "biaozhun")
+  // let res = await main.startAliProcess(params)
+  // if (res) {
+  ctx.body = {
+    status: 1,
+    msg: msg,
+    // data: null,
     // };
   }
 };
@@ -205,5 +219,5 @@ router.get("/tasks", getTasks); //查找任务列表
 router.post("/tasks", startTasks); //开始执行任务
 router.get("/taskbatch", getTaskBatches); //查找任务列表
 router.post("/geojson", test); //查找任务列表
-
+router.post("/testgeojson", geojson); //查找任务列表
 module.exports = router;

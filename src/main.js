@@ -60,9 +60,16 @@ async function readShapeFile(url = "./myshapes/test_end", type = "") {
     });
 }
 
-async function workflow(geojson, url, type) {
-  let s = JSON.stringify(geojson)
-  console.log(s)
+async function workflow(geojsonString, url, type) {
+  let geojson = geojsonString
+  if (typeof geojsonString === 'string') {
+    try {
+      geojson = JSON.stringify(geojson)
+    } catch (error) {
+      console.log(error)
+      return error.toString()
+    }
+  }
 
   let msg = "" + url;
   let features = geojson.features
@@ -931,8 +938,10 @@ function gridsToGroupImage(resArr) {
   console.log(group);
   return group;
 }
-
 function groupImagesToShp(arr) {
+  if (!fs.existsSync('./shp')) {
+    fs.mkdirSync('shp', { recursive: true });
+  }
   for (let i = 0; i < arr.length; i++) {
     const image = arr[i];
     let features = [];
