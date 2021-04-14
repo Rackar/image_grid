@@ -36,10 +36,10 @@
 
     </div>
     <script>
-        const apiurl = "http://localhost:3006/api/"
-        const apiurl_server = "http://172.16.100.120:3006/api/"
+        // const apiurl = "http://localhost:3006/api/"
+        // const apiurl_server = "http://172.16.100.120:3006/api/"
+        const apiurl = `${location.protocol}//${location.hostname}:3006/api/`
         const api = axios.create({
-            // baseURL: apiurl_server,
             baseURL: apiurl,
             timeout: 15000,
         });

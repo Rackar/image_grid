@@ -195,8 +195,9 @@ let test = async function (ctx, next) {
 let geojson = async function (ctx, next) {
   let geojson = ctx.request.body.geojson;
   let url = ctx.request.body.url;
+  let type = ctx.request.body.type;
   geojson = JSON.parse(geojson)
-  let msg = await main.workflow(geojson, url, "biaozhun")
+  let msg = await main.workflow(geojson, url, type || "biaozhun")
   // let res = await main.startAliProcess(params)
   // if (res) {
   ctx.body = {
@@ -229,7 +230,7 @@ router.get("/tasks", getTasks); //查找任务列表
 router.post("/tasks", startTasks); //开始执行任务
 router.delete("/tasks", deleteAll); //查找任务列表
 router.get("/taskbatch", getTaskBatches); //查找任务列表
-router.post("/geojson", test); //查找任务列表
-router.post("/testgeojson", geojson); //查找任务列表
+router.post("/geojson", geojson); //查找任务列表
+router.post("/testgeojson", test); //查找任务列表
 
 module.exports = router;

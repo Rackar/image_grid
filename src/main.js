@@ -128,7 +128,11 @@ async function workflow(geojsonString, url, type) {
   await insertToDatabase(allNewGrids);
 
   //进行处理发送命令
-  await beginProcessing(group, url);
+  let tasks = await beginProcessing(group, url);
+
+  //添加给tml的回退
+  let cbMsg = await tasksCallback(tasks)
+  console.log("任务给谭回调状态", cbMsg.result || cbMsg.message)
   //TODO 修改数据库状态
   await changeProcessed(group);
   let time4 = new Date()
@@ -142,6 +146,60 @@ function taskLog(text) {
   log(text)
   return text
 }
+
+function tasksCallback(tasks) {
+  let _url = ""
+  let method = "POST"
+  return new Promise((resolve) => {
+    try {
+      request(
+        {
+          url: _url,
+          method: method,
+          json: true,
+          useQuerystring: true,
+          encoding: null,
+          timeout: 10000,
+          qs: tasks
+        },
+        (error, response, result) => {
+          if (error == null) {
+            if (response.statusCode == 200) {
+              if (result.code == "0") {
+                //成功
+                resolve({
+                  status: true,
+                  result: result,
+                });
+              } else {
+                resolve({
+                  status: false,
+                  message: result.msg,
+                });
+              }
+            } else {
+              resolve({
+                status: false,
+                message: result,
+              });
+            }
+          } else {
+            resolve({
+              status: false,
+              message: error.message,
+            });
+          }
+        }
+      );
+    } catch (error) {
+      resolve({
+        status: false,
+        message: error.message,
+      });
+    }
+  });
+}
+
 async function checkImageExist(features) {
   //TODO 内部查重先跳过，认为非重
   let uniqueFeatures = unique(features, ["properties", "filename"])
@@ -754,7 +812,8 @@ async function beginProcessing(group, url) {
     // ALI_API.upload_task(previousFilename, filename, pair.uuid, pair.uuid); //TODO 自动发任务暂时屏蔽
   }
   fs.writeFileSync("./shp/tasks.json", JSON.stringify(list, null, 2), "");
-  await insertTasksToDatabase(list, url)
+  let tasks = await insertTasksToDatabase(list, url)
+  return tasks || []
 }
 
 async function insertTasksToDatabase(tasks, url) {
@@ -772,6 +831,7 @@ async function insertTasksToDatabase(tasks, url) {
       console.log("未插入数据库任何记录");
     }
   }
+  return tasks
 }
 
 async function startAliProcess(params) {
@@ -1001,7 +1061,7 @@ function getProcessingGrids(grids, processingIds) {
 function generateShp(features, filename, zip = false) {
   // (optional) set names for feature types and zipped folder
   var options = {
-    folder: 'shp/',
+    folder: '/ali_data/yangxu_result/',
     filename,
     types: {
       point: "mypoints",
@@ -1021,7 +1081,7 @@ function generateShp(features, filename, zip = false) {
       },
       options
     );
-    fs.writeFileSync("./shp/" + filename + ".zip", arr, "");
+    fs.writeFileSync("/ali_data/yangxu_result/" + filename + ".zip", arr, "");
 
     console.log("保存shp压缩包成功");
   } else {
