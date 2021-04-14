@@ -207,6 +207,16 @@ let geojson = async function (ctx, next) {
   }
 };
 
+let deleteAll = async function (ctx, next) {
+  let res = await Task.deleteMany()
+  let res2 = await Grid.deleteMany()
+  let msg = res.n + res2.n
+  ctx.body = {
+    status: 1,
+    msg: msg,
+  }
+};
+
 
 router.get("/grids", total); //查询数据库，可用query传入筛选参数
 router.post("/grids", add);
@@ -217,7 +227,9 @@ router.get("/images", getImages); //获取范围所包含的影像。查询数�
 router.get("/forceprocess", forceProcess); //获取范围所包含的影像。查询数据库，可用query传入筛选参数
 router.get("/tasks", getTasks); //查找任务列表
 router.post("/tasks", startTasks); //开始执行任务
+router.delete("/tasks", deleteAll); //查找任务列表
 router.get("/taskbatch", getTaskBatches); //查找任务列表
 router.post("/geojson", test); //查找任务列表
 router.post("/testgeojson", geojson); //查找任务列表
+
 module.exports = router;
