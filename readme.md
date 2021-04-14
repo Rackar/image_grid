@@ -12,6 +12,8 @@
 
 对接 AI 任务平台的 API
 
+shp生成时如何不压缩，shp的路径如何配置
+
 ## 问题
 
 shp 使用 https://github.com/cyclomedia/shp-write 这个 fork 库，polygon 中使用多个 ring，shp 文件打开正常，但是单要素，不知道阿里认不认。 经测试可行，但是处理效率降低。生成 shp 来加速处理的方法可以作废了。
