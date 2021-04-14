@@ -133,7 +133,7 @@ async function workflow(geojsonString, url, type) {
 
   //添加给tml的回退
   let cbMsg = await tasksCallback(tasks)
-  console.log("任务给谭回调状态", cbMsg.result || cbMsg.message)
+  console.log("任务给谭回调状态: ", cbMsg.result || cbMsg.message)
   //TODO 修改数据库状态
   await changeProcessed(group);
   let time4 = new Date()

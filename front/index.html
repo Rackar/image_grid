@@ -26,7 +26,9 @@
 
 
         <div v-for="task in d.tasks" :key="task.id">
-            <span>{{task.filename}}</span> <button @click="startTaskById(task._id)"></button>
+            <div>前影像：{{task.previousFilename}} </div>
+            <div>后影像：{{task.filename}}</div>
+            <div>shp文件：{{task.shp}}</div> <button @click="startTaskById(task._id)">开始任务</button>
         </div>
         <p>
             <button @click="clear">重置数据库（谨慎）</button>
@@ -54,7 +56,6 @@
                 })
                 async function search() {
                     let tasks = await api.get("tasks")
-                    debugger;
                     d.tasks = tasks.data.data
                 }
                 async function getBatches() {
