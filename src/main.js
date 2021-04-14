@@ -6,6 +6,7 @@ const gridCtrl = require("./gridCtrl");
 const Grid = require("../models/grid");
 const Task = require("../models/ali_task");
 const shpwrite = require("../libs/shp-write");
+const request = require("request");
 
 const ALI_API = require("./ali_api");
 
@@ -148,7 +149,7 @@ function taskLog(text) {
 }
 
 function tasksCallback(tasks) {
-  let _url = ""
+  let _url = "http://talatan.com:29111/static/noauth/change/compute_back"
   let method = "POST"
   return new Promise((resolve) => {
     try {
@@ -160,7 +161,7 @@ function tasksCallback(tasks) {
           useQuerystring: true,
           encoding: null,
           timeout: 10000,
-          qs: tasks
+          body: tasks
         },
         (error, response, result) => {
           if (error == null) {
