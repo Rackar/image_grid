@@ -33,7 +33,7 @@ const params = {
 
 // findImagesInFeature()
 
-// readShapeFile("./myshapes/01", 'changguang')
+// readShapeFile("./myshapes/02", 'changguang')
 // readJSONFile("./myshapes/01.json", 'changguang')
 // readJSONFile("./myshapes/nob.geojson", 'biaozhun')
 
@@ -995,10 +995,14 @@ function getProcessingGrids(grids, processingIds) {
   }
 }
 
-function generateShp(features, filename) {
+// let features = [{ "type": "Feature", "properties": { "filename": "JKF01007500574500051010020210125111214003F.tif", "time": "20210125111214" }, "geometry": { "type": "Polygon", "coordinates": [[[105.953, 40.8644], [105.893, 40.6549], [106.162, 40.6119], [106.222, 40.8212], [105.953, 40.8644]]] } }, { "type": "Feature", "properties": { "filename": "JKF01007500574500061010020210125111217003F.tif", "time": "20210125111217" }, "geometry": { "type": "Polygon", "coordinates": [[[105.899, 40.6755], [105.84, 40.4658], [106.108, 40.4234], [106.168, 40.6324], [105.899, 40.6755]]] } }, { "type": "Feature", "properties": { "filename": "JKF01007500562200021010020210117112505003F.tif", "time": "20210117112505" }, "geometry": { "type": "Polygon", "coordinates": [[[102.232, 39.2663], [102.175, 39.0576], [102.439, 39.0138], [102.496, 39.2226], [102.232, 39.2663]]] } }]
+// let mutilRings = polygonsToMutilRings(features);
+// generateShp(mutilRings, "a")
+function generateShp(features, filename, zip = false) {
   // (optional) set names for feature types and zipped folder
   var options = {
-    folder: filename,
+    folder: 'shp/',
+    filename,
     types: {
       point: "mypoints",
       polygon: "mypolygons",
@@ -1006,18 +1010,33 @@ function generateShp(features, filename) {
     },
   };
 
-  // a GeoJSON bridge for features
-  let arr = shpwrite.zip(
-    {
-      type: "FeatureCollection",
-      features,
-    },
-    options
-  );
-  //3. fs.writeFile  写入文件（会覆盖之前的内容）（文件不存在就创建）  utf8参数可以省略
-  fs.writeFileSync("./shp/" + filename + ".zip", arr, "");
 
-  console.log("保存shp压缩包成功");
+
+  if (zip) {
+    // ///压缩到zip
+    let arr = shpwrite.zip(
+      {
+        type: "FeatureCollection",
+        features,
+      },
+      options
+    );
+    fs.writeFileSync("./shp/" + filename + ".zip", arr, "");
+
+    console.log("保存shp压缩包成功");
+  } else {
+    ////  // 不要压缩
+    shpwrite.unzip(
+      {
+        type: "FeatureCollection",
+        features,
+      },
+      options
+    );
+  }
+
+
+
 }
 
 exports.readShapeFile = readShapeFile;
