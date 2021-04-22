@@ -22,6 +22,10 @@ shp 使用 https://github.com/cyclomedia/shp-write 这个 fork 库，polygon 中
 
 未考虑不同后缀名。
 
+ali服务器上的shp输入文件夹地址： ai_shps
+
+生成shp后，手动复制到该地址 
+
 ## 数据库查询命令
 
 ```s
