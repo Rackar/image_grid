@@ -8,6 +8,10 @@
     <title>Document</title>
     <script src="https://unpkg.com/vue@next"></script>
     <script src="https://unpkg.com/axios"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-plus/lib/index.full.js"></script>
 </head>
 
 <body>
@@ -31,19 +35,47 @@
 
         <br>
         <h3>进行中任务</h3>
-        <div v-for="task in d.processingTasks" :key="task.id">
+        <el-table :data="d.processingTasks" style="width: 100%">
+            <el-table-column prop="previousFilename" label="前影像">
+            </el-table-column>
+            <el-table-column prop="filename" label="后影像">
+            </el-table-column>
+            <el-table-column prop="shp" label="shp文件" width="280">
+            </el-table-column>
+            <el-table-column label="操作" width="130">
+                <template #default="scope">
+                    <el-button size="mini" @click="getProcessingStatus(scope.row)">查看任务状态</el-button>
+
+                </template>
+            </el-table-column>
+        </el-table>
+        <!-- <div v-for="task in d.processingTasks" :key="task.id">
             <div>前影像：{{task.previousFilename}} </div>
             <div>后影像：{{task.filename}}</div>
             <div>shp文件：{{task.shp}}</div>
             <div>{{task.info}}</div>
             <button @click="getProcessingStatus(task)">查看任务状态</button>
-        </div>
+        </div> -->
         <h3>待处理任务</h3>
-        <div v-for="task in d.tasks" :key="task.id">
+        <el-table :data="d.tasks" style="width: 100%">
+            <el-table-column prop="previousFilename" label="前影像">
+            </el-table-column>
+            <el-table-column prop="filename" label="后影像">
+            </el-table-column>
+            <el-table-column prop="shp" label="shp文件" width="280">
+            </el-table-column>
+            <el-table-column label="操作" width="130">
+                <template #default="scope">
+                    <el-button size="mini" @click="startTaskById(scope.row._id)">开始任务</el-button>
+
+                </template>
+            </el-table-column>
+        </el-table>
+        <!-- <div v-for="task in d.tasks" :key="task.id">
             <div>前影像：{{task.previousFilename}} </div>
             <div>后影像：{{task.filename}}</div>
             <div>shp文件：{{task.shp}}</div> <button @click="startTaskById(task._id)">开始任务</button>
-        </div>
+        </div> -->
         <p>
             <button @click="clear">重置数据库（谨慎）</button>
 
@@ -125,6 +157,7 @@
                 }
             }
         })
+        App.use(ElementPlus)
         App.mount('#app')
     </script>
 </body>
