@@ -146,8 +146,9 @@
                 async function getProcessingStatus(task) {
                     let session_id = task.shp
                     let res = await api.get("task?session_id=" + session_id)
-                    ElementPlus.ElNotification({ title: '任务状态', message: res.data.msg, type: "success" })
-                    if (res && res.result && res.result.msg === 'success') {
+                    let msg = res.data.msg
+                    ElementPlus.ElNotification({ title: '任务状态', message: msg, type: "success" })
+                    if (msg && msg.result && msg.result.msg === 'success') {
                         let result = await api.get("finishtask?session_id=" + session_id)
                     }
                 }
