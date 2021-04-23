@@ -246,7 +246,6 @@ let getTask = async function (ctx, next) {
 let finishTask = async function (ctx, next) {
   let params = ctx.query || {};
   let { session_id } = params
-  let session_id = ctx.request.body.session_id;
   let msg = "查找失败"
   if (session_id) {
     msg = await main.finishTask(session_id)
@@ -274,5 +273,5 @@ router.post("/geojsonurl", geojsonurl); //查找任务列表
 router.post("/testgeojson", test); //查找任务列表
 
 router.get("/task", getTask); //查找任务
-router.post("/finishTask", finishTask); //查找任务
+router.get("/finishTask", finishTask); //查找任务
 module.exports = router;
