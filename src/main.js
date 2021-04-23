@@ -847,6 +847,7 @@ async function startAliProcess(params) {
       msgs.push(msg)
 
       console.log(msg)
+      tasksCallback(tasks)
     }
     let result = await Task.updateMany(params, {
       status: "processing",
@@ -862,6 +863,13 @@ async function getAliStatus(session_id) {
   let msg = await ALI_API.search_task(session_id)
   console.log(msg)
   return msg
+}
+
+async function finishTask(uuid) {
+  let res = await Task.updateOne({ uuid }, { status: "processed" })
+
+  return res || "完成任务写入失败"
+
 }
 
 function getStandardFilename(filename) {
@@ -1122,3 +1130,4 @@ exports.findImagesInFeature = findImagesInFeature
 exports.startAliProcess = startAliProcess
 exports.getAliStatus = getAliStatus
 exports.workflow = workflow
+exports.finishTask = finishTask

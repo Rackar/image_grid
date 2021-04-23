@@ -36,7 +36,7 @@
             <div>后影像：{{task.filename}}</div>
             <div>shp文件：{{task.shp}}</div>
             <div>{{task.info}}</div>
-            <button @click="startTaskById(task)">查看任务状态</button>
+            <button @click="getProcessingStatus(task)">查看任务状态</button>
         </div>
         <h3>待处理任务</h3>
         <div v-for="task in d.tasks" :key="task.id">
@@ -75,7 +75,10 @@
                 async function search() {
                     let tasks = await api.get("tasks")
                     d.tasks = tasks.data.data.filter(task => task.status === "init")
-                    d.processingTasks = tasks.data.data.filter(task => task.status === "processing")
+                    d.processingTasks = tasks.data.data.filter(task => task.status === "processing").map(task => {
+                        task.info = null
+                        return task
+                    })
                 }
                 async function getBatches() {
                     let res = await api.get("taskbatch")
@@ -84,7 +87,7 @@
                 async function getProcessingStatus(task) {
                     let session_id = task.shp
                     let res = await api.get("task?session_id=" + session_id)
-                    task.info = res.data.data
+                    task.info = res.data.msg
                 }
                 async function startTasksByBatch() {
                     let q = {
@@ -117,6 +120,7 @@
                     startTasksByBatch,
                     startTasksByJsonUrl,
                     startTaskById,
+                    getProcessingStatus,
                     clear
                 }
             }
