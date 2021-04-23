@@ -24,14 +24,22 @@
 
 
         <h2>网格变化任务提交</h2>
-        <div> {{d.batches}} <button @click="getBatches">检索批次号</button> </div>
+        <!-- <div> {{d.batches}} <button @click="getBatches">检索批次号</button> </div> -->
         <br>
-        <div>批次号：<input type="text" v-model="d.taskparams"> <button @click="startTasksByBatch">启动本批次任务</button> </div>
+        批次编号
+        <el-select v-model="d.taskparams" placeholder="请选择">
+            <el-option v-for="item in d.batches" :key="item" :label="item" :value="item">
+            </el-option>
+        </el-select>
+        <el-button @click="startTasksByBatch" type="danger">执行批次图斑提取任务</el-button>
+        <!-- <div>批次号：<input type="text" v-model="d.taskparams">
+            <el-button @click="startTasksByBatch">启动所选批次任务</el-button>
+        </div> -->
         <br>
 
         <br>
-        <button @click="search">查询所有任务</button>
-
+        <el-button @click="search" type="primary">任务查询</el-button>
+        {{d.total}}
         <br>
         <h3>进行中任务</h3>
         <el-table :data="d.processingTasks" style="width: 100%">
@@ -75,8 +83,23 @@
             <div>后影像：{{task.filename}}</div>
             <div>shp文件：{{task.shp}}</div> <button @click="startTaskById(task._id)">开始任务</button>
         </div> -->
+        <h3>已完成任务</h3>
+        <el-table :data="d.processedTasks" style="width: 100%">
+            <el-table-column prop="previousFilename" label="前影像">
+            </el-table-column>
+            <el-table-column prop="filename" label="后影像">
+            </el-table-column>
+            <el-table-column prop="shp" label="shp文件" width="280">
+            </el-table-column>
+            <el-table-column label="操作" width="130">
+                <template #default="scope">
+                    <el-button size="mini" @click="getProcessingStatus(scope.row)">查看任务状态</el-button>
+
+                </template>
+            </el-table-column>
+        </el-table>
         <p>
-            <button @click="clear">重置数据库（谨慎）</button>
+            <el-button @click="clear" type="warning">重置数据库（谨慎）</el-button>
 
         </p>
         <!-- <div>{{d.node}}</div> -->
@@ -90,7 +113,7 @@
             baseURL: apiurl,
             timeout: 15000,
         });
-        const { createApp, ref, reactive } = Vue;
+        const { createApp, ref, reactive, onMounted } = Vue;
         const App = createApp({
             setup() {
                 const d = reactive({
@@ -100,17 +123,22 @@
                     geojsonurl: "/ali_data/meta/202101.geojson",
                     geojsonType: "biaozhun",
                     tasks: [],
-                    processingTasks: []
+                    processingTasks: [],
+                    processedTasks: [],
+                    total: ""
                     // node:process.env.NODE_ENV === "production"
                 })
                 async function search() {
                     let tasks = await api.get("tasks")
                     d.tasks = tasks.data.data.filter(task => task.status === "init")
-                    d.processingTasks = tasks.data.data.filter(task => task.status === "processing").map(task => {
-                        task.info = null
-                        return task
-                    })
+                    d.processingTasks = tasks.data.data.filter(task => task.status === "processing")
+                    d.processedTasks = tasks.data.data.filter(task => task.status === "processed")
+                    d.total = `处理中任务${d.processingTasks.length}, 待处理任务${d.tasks.length}, 已完成任务${d.processedTasks.length}`
                 }
+                onMounted(() => {
+                    search()
+                    getBatches()
+                })
                 async function getBatches() {
                     let res = await api.get("taskbatch")
                     d.batches = res.data.data
@@ -118,8 +146,7 @@
                 async function getProcessingStatus(task) {
                     let session_id = task.shp
                     let res = await api.get("task?session_id=" + session_id)
-                    task.info = res.data.msg
-                    ElementPlus.ElNotification({ title: '任务状态', message: task.info, type: "success" })
+                    ElementPlus.ElNotification({ title: '任务状态', message: res.data.msg, type: "success" })
                 }
                 async function startTasksByBatch() {
                     let q = {
