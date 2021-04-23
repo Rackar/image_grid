@@ -148,7 +148,7 @@
                     let res = await api.get("task?session_id=" + session_id)
                     let msg = res.data.msg
                     ElementPlus.ElNotification({ title: '任务状态', message: msg, type: "success" })
-                    if (msg && msg.result && msg.result.msg === 'success') {
+                    if (msg && msg.result && msg.result.msg === 'success' && msg.result.finished_msg === 'success') {
                         let result = await api.get("finishtask?session_id=" + session_id)
                     }
                 }
