@@ -858,6 +858,12 @@ async function startAliProcess(params) {
   return msgs
 }
 
+async function getAliStatus(session_id) {
+  let msg = await ALI_API.search_task(session_id)
+  console.log(msg)
+  return msg
+}
+
 function getStandardFilename(filename) {
   let DOMfilename = filename;
   return DOMfilename;
@@ -1114,4 +1120,5 @@ exports.readJSONFile = readJSONFile
 exports.forceProcessWithTwoImages = forceProcessWithTwoImages
 exports.findImagesInFeature = findImagesInFeature
 exports.startAliProcess = startAliProcess
+exports.getAliStatus = getAliStatus
 exports.workflow = workflow

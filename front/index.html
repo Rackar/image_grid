@@ -30,6 +30,15 @@
         <button @click="search">查询所有任务</button>
 
         <br>
+        <h3>进行中任务</h3>
+        <div v-for="task in d.processingTasks" :key="task.id">
+            <div>前影像：{{task.previousFilename}} </div>
+            <div>后影像：{{task.filename}}</div>
+            <div>shp文件：{{task.shp}}</div>
+            <div>{{task.info}}</div>
+            <button @click="startTaskById(task)">查看任务状态</button>
+        </div>
+        <h3>待处理任务</h3>
         <div v-for="task in d.tasks" :key="task.id">
             <div>前影像：{{task.previousFilename}} </div>
             <div>后影像：{{task.filename}}</div>
@@ -59,16 +68,23 @@
                     taskparams: "",
                     geojsonurl: "/ali_data/meta/202101.geojson",
                     geojsonType: "biaozhun",
-                    tasks: []
+                    tasks: [],
+                    processingTasks: []
                     // node:process.env.NODE_ENV === "production"
                 })
                 async function search() {
                     let tasks = await api.get("tasks")
                     d.tasks = tasks.data.data.filter(task => task.status === "init")
+                    d.processingTasks = tasks.data.data.filter(task => task.status === "processing")
                 }
                 async function getBatches() {
                     let res = await api.get("taskbatch")
                     d.batches = res.data.data
+                }
+                async function getProcessingStatus(task) {
+                    let session_id = task.shp
+                    let res = await api.get("task?session_id=" + session_id)
+                    task.info = res.data.data
                 }
                 async function startTasksByBatch() {
                     let q = {

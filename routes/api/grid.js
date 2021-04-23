@@ -233,6 +233,15 @@ let deleteAll = async function (ctx, next) {
   }
 };
 
+let getTask = async function (ctx, next) {
+  let params = ctx.query || {};
+  let { session_id } = params
+  let msg = await main.getAliStatus(session_id)
+  ctx.body = {
+    status: 1,
+    msg: msg,
+  }
+};
 
 router.get("/grids", total); //查询数据库，可用query传入筛选参数
 router.post("/grids", add);
@@ -249,4 +258,5 @@ router.post("/geojson", geojson); //查找任务列表
 router.post("/geojsonurl", geojsonurl); //查找任务列表
 router.post("/testgeojson", test); //查找任务列表
 
+router.get("/task", getTask); //查找任务
 module.exports = router;
