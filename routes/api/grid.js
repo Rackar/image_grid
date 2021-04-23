@@ -211,7 +211,6 @@ let geojson = async function (ctx, next) {
 let geojsonurl = async function (ctx, next) {
   let url = ctx.request.body.url || "/ali_data/meta/202101.geojson";
   let type = ctx.request.body.type || 'biaozhun';
-  geojson = JSON.parse(geojson)
   let msg = await main.readJSONFile(url, type)
   // let msg = await main.workflow(geojson, url, type || "biaozhun")
   // let res = await main.startAliProcess(params)

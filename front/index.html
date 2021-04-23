@@ -20,11 +20,16 @@
 
         <h2>网格变化任务提交</h2>
         <div> {{d.batches}} <button @click="getBatches">检索批次号</button> </div>
-        <div><input type="text" v-model="d.taskparams"> <button @click="startTasksByBatch">启动本批次任务</button> </div>
-
+        <br>
+        <div>批次号：<input type="text" v-model="d.taskparams"> <button @click="startTasksByBatch">启动本批次任务</button> </div>
+        <br>
+        <div>geojson文件路径：<input type="text" v-model="d.geojsonurl"> 类型：<input type="text" v-model="d.geojsonType">
+            <button @click="startTasksByJsonUrl">启动本json任务</button>
+        </div>
+        <br>
         <button @click="search">查询所有任务</button>
 
-
+        <br>
         <div v-for="task in d.tasks" :key="task.id">
             <div>前影像：{{task.previousFilename}} </div>
             <div>后影像：{{task.filename}}</div>
@@ -51,6 +56,9 @@
                 const d = reactive({
                     batches: [],
                     taskparams: "",
+                    taskparams: "",
+                    geojsonurl: "",
+                    geojsonType: "biaozhun",
                     tasks: []
                     // node:process.env.NODE_ENV === "production"
                 })
@@ -68,6 +76,14 @@
                     }
                     let tasks = await api.post("tasks", { params: q })
                 }
+                function startTasksByJsonUrl(params) {
+                    let q = {
+                        url: d.geojsonurl,
+                        type: d.geojsonType
+                    }
+                    api.post("geojsonurl", q)
+                }
+
                 async function startTaskById(_id) {
                     let q = {
                         _id
@@ -83,6 +99,7 @@
                     search,
                     getBatches,
                     startTasksByBatch,
+                    startTasksByJsonUrl,
                     startTaskById,
                     clear
                 }
