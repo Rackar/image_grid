@@ -36,7 +36,7 @@ const params = {
 
 // readShapeFile("./myshapes/02", 'changguang')
 // readJSONFile("./myshapes/01.json", 'changguang')
-// readJSONFile("./myshapes/nob.geojson", 'biaozhun')
+// readJSONFile("./myshapes/202101.geojson", 'biaozhun')
 
 async function readJSONFile(url = "./myshapes/01.json", type = "") {
   let string = fs.readFileSync(url, 'utf-8')
@@ -131,9 +131,10 @@ async function workflow(geojsonString, url, type) {
   //进行处理发送命令
   let tasks = await beginProcessing(group, url);
 
-  //添加给tml的回退
-  let cbMsg = await tasksCallback(tasks)
-  console.log("任务给谭回调状态: ", cbMsg.result || cbMsg.message)
+  // //添加给tml的回退
+  // let cbMsg = await tasksCallback(tasks)
+  // console.log("任务给谭回调状态: ", cbMsg.result || cbMsg.message)
+
   //TODO 修改数据库状态
   await changeProcessed(group);
   let time4 = new Date()
@@ -1101,6 +1102,7 @@ function generateShp(features, filename, zip = false) {
 }
 
 exports.readShapeFile = readShapeFile;
+exports.readJSONFile = readJSONFile
 exports.forceProcessWithTwoImages = forceProcessWithTwoImages
 exports.findImagesInFeature = findImagesInFeature
 exports.startAliProcess = startAliProcess

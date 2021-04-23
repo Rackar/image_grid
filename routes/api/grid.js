@@ -208,6 +208,22 @@ let geojson = async function (ctx, next) {
   }
 };
 
+let geojsonurl = async function (ctx, next) {
+  let url = ctx.request.body.url || "/ali_data/meta/202101.geojson";
+  let type = ctx.request.body.type || 'biaozhun';
+  geojson = JSON.parse(geojson)
+  let msg = await main.readJSONFile(url, type)
+  // let msg = await main.workflow(geojson, url, type || "biaozhun")
+  // let res = await main.startAliProcess(params)
+  // if (res) {
+  ctx.body = {
+    status: 1,
+    msg: msg,
+    // data: null,
+    // };
+  }
+};
+
 let deleteAll = async function (ctx, next) {
   let res = await Task.deleteMany()
   let res2 = await Grid.deleteMany()
@@ -231,6 +247,7 @@ router.post("/tasks", startTasks); //开始执行任务
 router.delete("/tasks", deleteAll); //查找任务列表
 router.get("/taskbatch", getTaskBatches); //查找任务列表
 router.post("/geojson", geojson); //查找任务列表
+router.post("/geojsonurl", geojsonurl); //查找任务列表
 router.post("/testgeojson", test); //查找任务列表
 
 module.exports = router;

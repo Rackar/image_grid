@@ -3,7 +3,7 @@ const urlencode = require("urlencode");
 const config = {
   alibaba_ai: {
     server_dir: "/home/admin/tianxun/data/", //阿里AI服务器的数据路径 不管是不是nas出来，uploadtask的参数都应该是这个路径
-    local_dir: "/ali_ai_data/", //本机时的地址,与阿里AI服务器的server_dir是一样的 不过这是本机mount路径
+    local_dir: "/ali_data/", //本机时的地址,与阿里AI服务器的server_dir是一样的 不过这是本机mount路径
     url: "http://173.0.0.186:30801/", //阿里AI服务器的服务地址
   },
 };
@@ -104,7 +104,7 @@ class ALI_API {
     if (_shp) {
       src_file_json[
         "shp"
-      ] = `${config.alibaba_ai.server_dir}ai_shps/${_shp}.shp`;
+      ] = `${config.alibaba_ai.server_dir}yangxu_result/${_shp}.shp`;
     }
     let out_file_shp_string = JSON.stringify(out_file_shp);
     let data = {
