@@ -42,7 +42,7 @@ async function readJSONFile(url = "./myshapes/01.json", type = "") {
   let string = fs.readFileSync(url, 'utf-8')
   // string = string.toString('utf8').replace(/^\uFEFF/, '') //去除bom文件头
   let geojson = JSON.parse(string)
-  workflow(geojson, url, type)
+  await workflow(geojson, url, type)
 }
 
 async function readShapeFile(url = "./myshapes/test_end", type = "") {
@@ -838,16 +838,24 @@ async function insertTasksToDatabase(tasks, url) {
 
 async function startAliProcess(params) {
   let tasks = await Task.find(params)
+  let msgs = []
   if (tasks && tasks.length) {
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i];
       let { previousFilename, filename, shp } = task
-      await ALI_API.upload_task(previousFilename, filename, shp, task.uuid)
+      let msg = await ALI_API.upload_task(previousFilename, filename, shp, task.uuid)
+      msgs.push(msg)
+
+      console.log(msg)
     }
+    let result = await Task.updateMany(params, {
+      status: "processing",
+    })
+    console.log('更新任务处理状态', result)
   } else {
     console.log("未找到任何记录");
   }
-  return true
+  return msgs
 }
 
 function getStandardFilename(filename) {

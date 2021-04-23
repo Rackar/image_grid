@@ -57,14 +57,14 @@
                     batches: [],
                     taskparams: "",
                     taskparams: "",
-                    geojsonurl: "",
+                    geojsonurl: "/ali_data/meta/202101.geojson",
                     geojsonType: "biaozhun",
                     tasks: []
                     // node:process.env.NODE_ENV === "production"
                 })
                 async function search() {
                     let tasks = await api.get("tasks")
-                    d.tasks = tasks.data.data
+                    d.tasks = tasks.data.data.filter(task => task.status === "init")
                 }
                 async function getBatches() {
                     let res = await api.get("taskbatch")

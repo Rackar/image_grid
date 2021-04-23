@@ -172,7 +172,7 @@ let startTasks = async function (ctx, next) {
   if (res) {
     ctx.body = {
       status: 1,
-      msg: "获取任务列表",
+      msg: "添加任务成功",
       data: res,
     };
   }
