@@ -123,7 +123,8 @@
                 }
                 async function startTasksByBatch() {
                     let q = {
-                        batch: d.taskparams
+                        batch: d.taskparams,
+                        status: 'init'
                     }
                     let tasks = await api.post("tasks", { params: q })
                 }
