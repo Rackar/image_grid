@@ -273,5 +273,5 @@ router.post("/geojsonurl", geojsonurl); //查找任务列表
 router.post("/testgeojson", test); //查找任务列表
 
 router.get("/task", getTask); //查找任务
-router.get("/finishTask", finishTask); //查找任务
+router.get("/finishtask", finishTask); //查找任务
 module.exports = router;
